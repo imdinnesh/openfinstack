@@ -1,0 +1,18 @@
+services:
+  auth:
+    build: ../services/auth
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: fintechdb
+
+  redis:
+    image: redis:latest
