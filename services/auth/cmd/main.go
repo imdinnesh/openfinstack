@@ -1,30 +1,57 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"context"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
+	constants "github.com/imdinnesh/openfinstack/packages/config"
 	Logger "github.com/imdinnesh/openfinstack/packages/logger"
 	"github.com/imdinnesh/openfinstack/services/auth/config"
-	"github.com/imdinnesh/openfinstack/services/auth/internal/handler"
+	"github.com/imdinnesh/openfinstack/services/auth/router"
 )
 
 func main() {
 	Logger.Log.Info().Msg("Starting Auth Service")
 	cfg := config.Load()
-	router := gin.Default()
-	router.GET("/auth-test", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
-			"message": "Auth Service is running",
-		})
-	})
-	public := router.Group("/api/auth")
-	{
-		public.POST("/register", handler.Register)
-		public.POST("/login", handler.Login)
-		public.POST("/refresh", handler.RefreshToken)
+
+	// Set up router (Gin)
+	Router := router.New(cfg)
+
+	// Create custom HTTP server
+	srv := &http.Server{
+		Addr:    ":" + cfg.ServerPort,
+		Handler: Router,
 	}
 
-	if err := router.Run(":" + cfg.ServerPort); err != nil {
-		Logger.Log.Fatal().Err(err).Msg("Failed to start Auth Service")
+	// Signal handling for graceful shutdown
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		Logger.Log.Info().Msgf("Auth Service listening on port %s", cfg.ServerPort)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			Logger.Log.Error().Err(err).Msg("Server failed to start")
+		} else {
+			Logger.Log.Info().Msg("Server started successfully")
+		}
+	}()
+
+	<-done // Wait for signal
+
+	Logger.Log.Info().Msg("Received shutdown signal, shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), constants.ShutdownTimeout)
+	defer cancel()
+
+	// Graceful shutdown
+	if err := srv.Shutdown(ctx); err != nil {
+		Logger.Log.Error().Err(err).Msg("Server forced to shutdown")
+	} else {
+		Logger.Log.Info().Msg("Server gracefully stopped")
 	}
-	Logger.Log.Info().Msg("Auth Service started successfully")
+
+	Logger.Log.Info().Msg("Cleaning up resources...")
 }
