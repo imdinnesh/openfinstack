@@ -10,6 +10,13 @@ import (
 type Config struct {
 	Env        string
 	ServerPort string
+	DBUrl         string
+	RedisUrl      string
+	JWTSecret     string
+	SMTPHost      string
+	SMTPPort      string
+	SMTPUser      string
+	SMTPPassword  string
 }
 
 func Load() *Config {
@@ -26,6 +33,13 @@ func Load() *Config {
 	cfg := &Config{
 		Env:        getEnv("ENV", "dev"),
 		ServerPort: getEnv("SERVER_PORT", "8080"),
+		DBUrl:         getEnv("DB_URL", "postgres://user:pass@localhost:5432/finstack_auth"),
+		RedisUrl:      getEnv("REDIS_URL", "localhost:6379"),
+		JWTSecret:     getEnv("JWT_SECRET", "supersecretkey"),
+		SMTPHost:      getEnv("SMTP_HOST", ""),
+		SMTPPort:      getEnv("SMTP_PORT", "587"),
+		SMTPUser:      getEnv("SMTP_USER", ""),
+		SMTPPassword:  getEnv("SMTP_PASSWORD", ""),
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)
