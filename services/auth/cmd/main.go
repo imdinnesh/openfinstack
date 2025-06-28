@@ -10,15 +10,19 @@ import (
 	constants "github.com/imdinnesh/openfinstack/packages/config"
 	Logger "github.com/imdinnesh/openfinstack/packages/logger"
 	"github.com/imdinnesh/openfinstack/services/auth/config"
+	"github.com/imdinnesh/openfinstack/services/auth/db"
+	"github.com/imdinnesh/openfinstack/services/auth/redis"
 	"github.com/imdinnesh/openfinstack/services/auth/router"
 )
 
 func main() {
 	Logger.Log.Info().Msg("Starting Auth Service")
 	cfg := config.Load()
+	db := db.InitDB(cfg)
+	redisClient := redis.NewClient(cfg.RedisUrl)
 
 	// Set up router (Gin)
-	Router := router.New(cfg)
+	Router := router.New(cfg, db, redisClient)
 
 	// Create custom HTTP server
 	srv := &http.Server{

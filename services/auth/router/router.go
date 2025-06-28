@@ -5,10 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/imdinnesh/openfinstack/services/auth/config"
-	"github.com/imdinnesh/openfinstack/services/auth/internal/handler"
+	"github.com/imdinnesh/openfinstack/services/auth/internal/routes"
+	"github.com/imdinnesh/openfinstack/services/auth/redis"
+	"gorm.io/gorm"
 )
 
-func New(cfg *config.Config) *gin.Engine {
+func New(cfg *config.Config, db *gorm.DB, redisClient *redis.Client) *gin.Engine {
 	router := gin.Default()
 
 	// test route
@@ -18,9 +20,8 @@ func New(cfg *config.Config) *gin.Engine {
 		})
 	})
 
-	public := router.Group("/api/auth")
-	public.POST("/register", handler.Register)
-	public.POST("/login", handler.Login)
-	public.POST("/refresh", handler.RefreshToken)
+	public := router.Group("/api/v1")
+	routes.RegisterAuthRoutes(public, db, cfg, redisClient)
+
 	return router
 }
