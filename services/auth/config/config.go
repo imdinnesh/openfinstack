@@ -33,7 +33,7 @@ func Load() *Config {
 	cfg := &Config{
 		Env:        getEnv("ENV", "dev"),
 		ServerPort: getEnv("SERVER_PORT", "8080"),
-		DBUrl:         getEnv("DB_URL", "postgres://user:pass@localhost:5432/finstack_auth"),
+		DBUrl:         getEnv("DB_URL", "postgres://auth:auth@localhost:5432/fintechdb_auth"),
 		RedisUrl:      getEnv("REDIS_URL", "localhost:6379"),
 		JWTSecret:     getEnv("JWT_SECRET", "supersecretkey"),
 		SMTPHost:      getEnv("SMTP_HOST", ""),

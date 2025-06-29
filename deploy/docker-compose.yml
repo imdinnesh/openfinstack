@@ -10,9 +10,11 @@ services:
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: fintechdb
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: auth
+      POSTGRES_DB: fintechdb_auth
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:latest
