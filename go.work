@@ -5,4 +5,5 @@ use (
 	./services/ledger
 	./pkg/logger
 	./pkg/config
+	./pkg/middleware
 )
