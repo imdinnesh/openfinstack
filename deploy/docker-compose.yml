@@ -4,15 +4,24 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - postgres
+      - auth-db
       - redis
 
-  postgres:
+  auth-db:
     image: postgres:latest
     environment:
       POSTGRES_USER: auth
       POSTGRES_PASSWORD: auth
       POSTGRES_DB: fintechdb_auth
+    ports:
+      - "5432:5432"
+    
+  kyc-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: profile
+      POSTGRES_PASSWORD: profile
+      POSTGRES_DB: fintechdb_kyc
     ports:
       - "5432:5432"
 
