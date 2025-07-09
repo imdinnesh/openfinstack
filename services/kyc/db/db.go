@@ -16,8 +16,8 @@ func InitDB(cfg *config.Config) *gorm.DB {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	// Auto migrate profile table
-	err = db.AutoMigrate(&models.Profile{})
+	// Auto migrate kyc table
+	err = db.AutoMigrate(&models.KYC{})
 	if err != nil {
 		log.Fatal("Failed to run migrations:", err)
 	}

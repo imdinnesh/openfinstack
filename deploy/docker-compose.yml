@@ -19,8 +19,8 @@ services:
   kyc-db:
     image: postgres:latest
     environment:
-      POSTGRES_USER: profile
-      POSTGRES_PASSWORD: profile
+      POSTGRES_USER: kyc
+      POSTGRES_PASSWORD: kyc
       POSTGRES_DB: fintechdb_kyc
     ports:
       - "5432:5432"

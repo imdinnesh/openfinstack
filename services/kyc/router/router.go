@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/imdinnesh/openfinstack/services/kyc/config"
+	"github.com/imdinnesh/openfinstack/services/kyc/internal/routes"
 	"gorm.io/gorm"
 )
 
@@ -18,6 +19,7 @@ func New(cfg *config.Config, db *gorm.DB) *gin.Engine {
 		})
 	})
 
-	router.Group("/api/v1")
+	public:=router.Group("/api/v1")
+	routes.RegisterKYCRoutes(public, db)
 	return router
 }
