@@ -23,7 +23,7 @@ services:
       POSTGRES_PASSWORD: kyc
       POSTGRES_DB: fintechdb_kyc
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
   redis:
     image: redis:latest
