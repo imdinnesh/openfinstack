@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/imdinnesh/openfinstack/packages/middleware"
 	"github.com/imdinnesh/openfinstack/services/auth/config"
 	"github.com/imdinnesh/openfinstack/services/auth/internal/handler"
 	"github.com/imdinnesh/openfinstack/services/auth/internal/repository"
@@ -15,9 +16,11 @@ func RegisterAuthRoutes(r *gin.RouterGroup, db *gorm.DB, cfg *config.Config, red
 	authSvc := service.NewAuthService(userRepo, cfg, redisClient)
 	authHandler := handler.NewAuthHandler(authSvc)
 
+	middleware:=middleware.New(cfg.JWTSecret,redisClient)
+
 	auth := r.Group("/auth")
 	auth.POST("/register", authHandler.Register)
 	auth.POST("/login", authHandler.Login)
 	auth.POST("/refresh", authHandler.Refresh)
-	auth.POST("/logout", authHandler.Logout)
+	auth.POST("/logout",middleware.Handler(), authHandler.Logout)
 }

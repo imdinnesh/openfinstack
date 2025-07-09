@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -31,5 +32,6 @@ func (c *Client) IsBlacklisted(token string) (bool, error) {
 	if err == redis.Nil {
 		return false, nil
 	}
+	fmt.Println("Redis val",val)
 	return val == "1", err
 }
