@@ -4,12 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/imdinnesh/openfinstack/services/auth/redis"
 	"github.com/imdinnesh/openfinstack/services/kyc/config"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/routes"
 	"gorm.io/gorm"
 )
 
-func New(cfg *config.Config, db *gorm.DB) *gin.Engine {
+func New(cfg *config.Config, db *gorm.DB, redisClient *redis.Client) *gin.Engine {
 	router := gin.Default()
 
 	// test route
@@ -20,6 +21,6 @@ func New(cfg *config.Config, db *gorm.DB) *gin.Engine {
 	})
 
 	public:=router.Group("/api/v1")
-	routes.RegisterKYCRoutes(public, db)
+	routes.RegisterKYCRoutes(public, db, cfg, redisClient)
 	return router
 }

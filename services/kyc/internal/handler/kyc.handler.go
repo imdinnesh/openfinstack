@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -29,8 +30,8 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetUint("userID")
-
+	userID := c.GetUint("user_id")
+	fmt.Println("User ID:", userID)
 	input := &models.KYC{
 		UserID:       userID,
 		DocumentType: req.DocumentType,
@@ -48,7 +49,7 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 
 // GetUserKYC returns KYC records of the logged-in user
 func (h *KYCHandler) GetUserKYC(c *gin.Context) {
-	userID := c.GetUint("userID")
+	userID := c.GetUint("user_id")
 
 	kycs, err := h.service.GetUserKYC(userID)
 	if err != nil {
@@ -95,7 +96,7 @@ func (h *KYCHandler) VerifyKYC(c *gin.Context) {
 		return
 	}
 
-	adminID := c.GetUint("userID")
+	adminID := c.GetUint("user_id")
 
 	if err := h.service.VerifyKYC(uint(id), req.Status, req.Reason, adminID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

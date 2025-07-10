@@ -9,6 +9,7 @@ import (
 
 	constants "github.com/imdinnesh/openfinstack/packages/config"
 	Logger "github.com/imdinnesh/openfinstack/packages/logger"
+	"github.com/imdinnesh/openfinstack/services/auth/redis"
 	"github.com/imdinnesh/openfinstack/services/kyc/config"
 	"github.com/imdinnesh/openfinstack/services/kyc/db"
 	"github.com/imdinnesh/openfinstack/services/kyc/router"
@@ -18,9 +19,10 @@ func main() {
 	Logger.Log.Info().Msg("Starting KYC Service")
 	cfg := config.Load()
 	db := db.InitDB(cfg)
-
+	redisClient := redis.NewClient(cfg.RedisUrl)
+	
 	// Set up router (Gin)
-	Router := router.New(cfg, db)
+	Router := router.New(cfg, db,redisClient)
 
 	// Create custom HTTP server
 	srv := &http.Server{
