@@ -1,0 +1,21 @@
+services:
+  - name: auth
+    baseURL: "http://auth:8000"
+    routes:
+      - path: "/auth/login"
+        method: "POST"
+        servicePath: "/login"
+        middlewares: []
+
+      - path: "/auth/logout"
+        method: "POST"
+        servicePath: "/logout"
+        middlewares: ["auth"]
+
+  - name: kyc
+    baseURL: "http://kyc:9000"
+    routes:
+      - path: "/kyc/status"
+        method: "GET"
+        servicePath: "/status"
+        middlewares: ["auth", "rateLimit"]
