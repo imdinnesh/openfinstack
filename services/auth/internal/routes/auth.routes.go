@@ -16,11 +16,11 @@ func RegisterAuthRoutes(r *gin.RouterGroup, db *gorm.DB, cfg *config.Config, red
 	authSvc := service.NewAuthService(userRepo, cfg, redisClient)
 	authHandler := handler.NewAuthHandler(authSvc)
 
-	middleware:=middleware.New(cfg.JWTSecret,redisClient)
+	middleware.New(cfg.JWTSecret,redisClient)
 
 	auth := r.Group("/auth")
 	auth.POST("/register", authHandler.Register)
 	auth.POST("/login", authHandler.Login)
 	auth.POST("/refresh", authHandler.Refresh)
-	auth.POST("/logout",middleware.Handler(), authHandler.Logout)
+	auth.POST("/logout",authHandler.Logout)
 }

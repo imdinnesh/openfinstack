@@ -20,7 +20,7 @@ services:
       - path: "/auth/logout"
         method: "POST"
         servicePath: "/auth/logout"
-        middlewares: []
+        middlewares: ["auth"]
 
   - name: kyc
     baseURL: "http://kyc:9000"
