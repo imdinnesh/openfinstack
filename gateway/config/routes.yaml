@@ -15,7 +15,7 @@ services:
       - path: "/auth/refresh"
         method: "POST"
         servicePath: "/auth/refresh"
-        middlewares: []
+        middlewares: ["rateLimitAggressive"]
 
       - path: "/auth/logout"
         method: "POST"
