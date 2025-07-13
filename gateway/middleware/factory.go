@@ -6,20 +6,30 @@ import (
 	"github.com/imdinnesh/openfinstack/packages/redis"
 )
 
-func GetMiddlewares(names []string,cfgEnvs *config.ConfigVariables,redisClient *redis.Client) []gin.HandlerFunc {
+// All available middlewares.
+type Registry struct {
+	Available map[string]gin.HandlerFunc
+}
+
+// NewRegistry builds and returns a Registry.
+func NewRegistry(cfgEnvs *config.ConfigVariables, redisClient *redis.Client) *Registry {
+	authMiddleware := NewAuthMiddleware(cfgEnvs.JWTSecret, redisClient)
+
+	return &Registry{
+		Available: map[string]gin.HandlerFunc{
+			"auth":      authMiddleware.Handler(),
+			"rateLimit": RateLimitMiddleware(),
+		},
+	}
+}
+
+// GetMiddlewares returns the selected middlewares.
+func (r *Registry) GetMiddlewares(names []string) []gin.HandlerFunc {
 	var mws []gin.HandlerFunc
-
-	AuthMiddleware:=New(cfgEnvs.JWTSecret,redisClient)
-
 	for _, name := range names {
-		switch name {
-		case "auth":
-			mws = append(mws, AuthMiddleware.Handler())
-		case "rateLimit":
-			mws = append(mws, RateLimitMiddleware())
-		// Add more middlewares here as needed
+		if mw, exists := r.Available[name]; exists {
+			mws = append(mws, mw)
 		}
 	}
-
 	return mws
 }

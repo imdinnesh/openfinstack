@@ -15,7 +15,7 @@ type AuthMiddleware struct {
 	Redis     *redis.Client
 }
 
-func New(secret string, redisClient *redis.Client) *AuthMiddleware {
+func NewAuthMiddleware(secret string, redisClient *redis.Client) *AuthMiddleware {
 	return &AuthMiddleware{
 		JWTSecret: secret,
 		Redis:     redisClient,

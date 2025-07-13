@@ -8,17 +8,22 @@ import (
 	"github.com/imdinnesh/openfinstack/packages/redis"
 )
 
-func SetupRouter(cfg *config.Config,cfgEnvs *config.ConfigVariables,redisClient *redis.Client) *gin.Engine {
+func SetupRouter(
+	cfg *config.Config,
+	cfgEnvs *config.ConfigVariables,
+	redisClient *redis.Client,
+) *gin.Engine {
 	r := gin.Default()
+
+	middlewareRegistry := middleware.NewRegistry(cfgEnvs, redisClient)
 
 	for _, svc := range cfg.Services {
 		for _, rt := range svc.Routes {
 			handler := discovery.ProxyHandler(svc.BaseURL, rt.ServicePath)
 
-			// Fetch middlewares for this route
-			mws := middleware.GetMiddlewares(rt.Middlewares, cfgEnvs, redisClient)
+			mws := middlewareRegistry.GetMiddlewares(rt.Middlewares)
 
-			// Create route group with these middlewares
+
 			group := r.Group("")
 			group.Use(mws...)
 
