@@ -25,7 +25,22 @@ services:
   - name: kyc
     baseURL: "http://localhost:8081/api/v1"
     routes:
-      - path: "/kyc/status"
+      - path: "/kyc/submit"
+        method: "POST"
+        servicePath: "/kyc/submit"
+        middlewares: ["auth"]
+
+      - path: "/kyc/user"
         method: "GET"
-        servicePath: "/status"
-        middlewares: ["auth", "rateLimit"]
+        servicePath: "/kyc/user"
+        middlewares: ["auth"]
+
+      - path: "/kyc/pending"
+        method: "GET"
+        servicePath: "/kyc-admin/pending"
+        middlewares: ["auth"]
+
+      - path: "/kyc/verify/:id"
+        method: "POST"
+        servicePath: "/kyc-admin/verify/:id"
+        middlewares: ["auth"]

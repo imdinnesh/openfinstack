@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -50,7 +49,6 @@ func (a *AuthMiddleware) Handler() gin.HandlerFunc {
 
 		// Check blacklist in Redis
 		isBlacklisted, err := a.Redis.IsBlacklisted(tokenStr)
-		fmt.Print("Token blacklisted: ", isBlacklisted)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error checking token blacklist"})
 			c.Abort()
