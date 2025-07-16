@@ -30,9 +30,11 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetUint("user_id")
-	fmt.Println("User ID:", userID)
-	input := &models.KYC{
+	userIDStr := c.Request.Header.Get("X-User-ID")
+	userID64, _ := strconv.ParseUint(userIDStr, 10, 64)
+	userID := uint(userID64)
+	fmt.Println("User ID:", userID64)
+	input := &models.KYC{	
 		UserID:       userID,
 		DocumentType: req.DocumentType,
 		DocumentURL:  req.DocumentURL,
@@ -49,7 +51,9 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 
 // GetUserKYC returns KYC records of the logged-in user
 func (h *KYCHandler) GetUserKYC(c *gin.Context) {
-	userID := c.GetUint("user_id")
+	userIDStr := c.Request.Header.Get("X-User-ID")
+	userID64, _ := strconv.ParseUint(userIDStr, 10, 64)
+	userID := uint(userID64)
 
 	kycs, err := h.service.GetUserKYC(userID)
 	if err != nil {
