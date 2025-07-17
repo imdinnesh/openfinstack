@@ -4,6 +4,7 @@ use (
 	./services/auth
 	./services/ledger
 	./services/kyc
+	./services/wallet
 	./pkg/logger
 	./pkg/config
 	./pkg/middleware
