@@ -1,5 +1,4 @@
-// internal/model/wallet.go
-package model
+package models
 
 import "time"
 
