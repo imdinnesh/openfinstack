@@ -28,8 +28,8 @@ func Load() *Config {
 
 	cfg := &Config{
 		Env:        getEnv("ENV", "dev"),
-		ServerPort: getEnv("SERVER_PORT", "8082"),
-		DBUrl:         getEnv("DB_URL", "postgres://profile:profile@localhost:5433/fintechdb_kyc"),
+		ServerPort: getEnv("SERVER_PORT", "8083"),
+		DBUrl:         getEnv("DB_URL", "postgres://wallet:wallet@localhost:5434/fintechdb_wallet"),
 		RedisUrl:      getEnv("REDIS_URL", "localhost:6379"),
 		JWTSecret:     getEnv("JWT_SECRET", "supersecretkey"),
 	}

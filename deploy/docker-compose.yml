@@ -25,6 +25,15 @@ services:
     ports:
       - "5433:5432"
 
+  wallet-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: wallet
+      POSTGRES_PASSWORD: wallet
+      POSTGRES_DB: fintechdb_wallet
+    ports:
+      - "5434:5432"
+
   redis:
     image: redis:latest
     container_name: fintech_redis
