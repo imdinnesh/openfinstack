@@ -41,3 +41,9 @@ services:
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
+
+  kafka:
+    image: apache/kafka:latest
+    container_name: fintech_kafka
+    ports:
+      - "9092:9092"

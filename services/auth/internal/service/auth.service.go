@@ -1,10 +1,12 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"time"
 
 	"github.com/imdinnesh/openfinstack/services/auth/config"
+	"github.com/imdinnesh/openfinstack/services/auth/internal/events"
 	"github.com/imdinnesh/openfinstack/services/auth/internal/repository"
 	"github.com/imdinnesh/openfinstack/services/auth/models"
 	"github.com/imdinnesh/openfinstack/services/auth/redis"
@@ -22,13 +24,15 @@ type authService struct {
 	userRepo repository.UserRepository
 	cfg      *config.Config
 	redis    *redis.Client
+	publisher *events.UserEventPublisher
 }
 
-func NewAuthService(repo repository.UserRepository, cfg *config.Config, rds *redis.Client) AuthService {
+func NewAuthService(repo repository.UserRepository, cfg *config.Config, rds *redis.Client, publisher *events.UserEventPublisher) AuthService {
 	return &authService{
 		userRepo: repo,
 		cfg:      cfg,
 		redis:    rds,
+		publisher: publisher,
 	}
 }
 
@@ -45,6 +49,10 @@ func (s *authService) RegisterUser(email, password string) (*models.User, error)
 	}
 
 	if err := s.userRepo.CreateUser(user); err != nil {
+		return nil, err
+	}
+
+	if err := s.publisher.PublishUserCreated(context.Background(), user.ID, user.Email); err != nil {
 		return nil, err
 	}
 
