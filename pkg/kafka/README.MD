@@ -1,70 +1,6 @@
+## Kafka Compose file
+```yaml
 services:
-  auth-db:
-    image: postgres:latest
-    container_name: fintech_auth_db
-    environment:
-      POSTGRES_USER: auth
-      POSTGRES_PASSWORD: auth
-      POSTGRES_DB: fintechdb_auth
-    ports:
-      - "5432:5432"
-    networks:
-      - fintech-net
-    healthcheck: # Basic health check
-      test: ["CMD-SHELL", "pg_isready -U auth -d fintechdb_auth"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  kyc-db:
-    image: postgres:latest
-    container_name: fintech_kyc_db
-    environment:
-      POSTGRES_USER: kyc
-      POSTGRES_PASSWORD: kyc
-      POSTGRES_DB: fintechdb_kyc
-    ports:
-      - "5433:5432"
-    networks:
-      - fintech-net
-    healthcheck: # Basic health check
-      test: ["CMD-SHELL", "pg_isready -U kyc -d fintechdb_kyc"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  wallet-db:
-    image: postgres:latest
-    container_name: fintech_wallet_db
-    environment:
-      POSTGRES_USER: wallet
-      POSTGRES_PASSWORD: wallet
-      POSTGRES_DB: fintechdb_wallet
-    ports:
-      - "5434:5432"
-    networks:
-      - fintech-net
-    healthcheck: # Basic health check
-      test: ["CMD-SHELL", "pg_isready -U wallet -d fintechdb_wallet"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:latest
-    container_name: fintech_redis
-    restart: always
-    ports:
-      - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
-    networks:
-      - fintech-net
-    healthcheck: # Basic health check
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: fintech_zookeeper
@@ -141,12 +77,19 @@ services:
       - "1080:8080"
     networks:
       - fintech-net
+```
 
-volumes:
-  zookeeper_data:
-  zookeeper_logs:
-  kafka_data:
+## Topics List
+```bash
+docker exec fintech_kafka kafka-topics --bootstrap-server localhost:9092 --list
+```
 
-networks:
-  fintech-net:
-    driver: bridge
+## Create Topic
+```bash
+docker exec fintech_kafka kafka-topics --bootstrap-server localhost:9092 --create --topic user.created --partitions 3 --replication-factor 1
+```
+
+
+
+
+
