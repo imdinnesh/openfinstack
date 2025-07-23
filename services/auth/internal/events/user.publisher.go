@@ -3,7 +3,6 @@ package events
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/imdinnesh/openfinstack/packages/kafka"
 )
@@ -24,7 +23,6 @@ func NewUserEventPublisher() *UserEventPublisher {
 }
 
 func (p *UserEventPublisher) PublishUserCreated(ctx context.Context, id uint, email string) error {
-    fmt.Println("Publishing user created event for ID:", id, "Email:", email)
     event := UserCreatedEvent{
         ID:    id,
         Email: email,
