@@ -142,6 +142,16 @@ services:
     networks:
       - fintech-net
 
+  smtp4dev:
+    image: rnwood/smtp4dev
+    container_name: fintech_smtp4dev
+    restart: unless-stopped
+    ports:
+      - "3030:80"  # Web UI
+      - "2525:25"  # SMTP port
+    networks:
+      - fintech-net
+
 volumes:
   zookeeper_data:
   zookeeper_logs:

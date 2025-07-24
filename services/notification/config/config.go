@@ -28,8 +28,8 @@ func Load() *Config {
 
 	cfg := &Config{
 		Env:        getEnv("ENV", "dev"),
-		SMTPHost:      getEnv("SMTP_HOST", ""),
-		SMTPPort:      getEnv("SMTP_PORT", "587"),
+		SMTPHost:      getEnv("SMTP_HOST", "localhost"),
+		SMTPPort:      getEnv("SMTP_PORT", "2525"),
 		SMTPUser:      getEnv("SMTP_USER", ""),
 		SMTPPassword:  getEnv("SMTP_PASSWORD", ""),
 	}
