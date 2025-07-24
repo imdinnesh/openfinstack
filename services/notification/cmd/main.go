@@ -8,14 +8,24 @@ import (
 	"syscall"
 
 	"github.com/imdinnesh/openfinstack/packages/kafka"
-	consumer "github.com/imdinnesh/openfinstack/services/notifications/events"
 	Logger "github.com/imdinnesh/openfinstack/packages/logger"
+	"github.com/imdinnesh/openfinstack/services/notifications/email"
+	consumer "github.com/imdinnesh/openfinstack/services/notifications/events"
 )
 
 func main() {
 	Logger.Log.Info().Msg("Starting Notification Service")
 	dispatch := kafka.NewDispatcher()
-	dispatch.RegisterHandler("user.created", consumer.HandleUserCreated)
+
+	smtpSender := email.NewSMTPSender(
+    os.Getenv("SMTP_FROM"),
+    os.Getenv("SMTP_PASS"),
+    os.Getenv("SMTP_HOST"),
+    os.Getenv("SMTP_PORT"))
+
+	emailService := email.NewService(smtpSender)
+	handler := consumer.NewUserCreatedHandler(emailService)
+	dispatch.RegisterHandler("user.created", handler.Handle)
 
     consumer := kafka.NewConsumer("localhost:9092", "notification-group", []string{"user.created"}, dispatch)
 

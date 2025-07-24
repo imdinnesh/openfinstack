@@ -1,21 +1,33 @@
 package consumer
 
 import (
-    "encoding/json"
-    "log"
+	"encoding/json"
+	"github.com/imdinnesh/openfinstack/services/notifications/email"
 )
 
 type UserCreatedEvent struct {
-    ID    uint `json:"id"`
+    ID    uint   `json:"id"`
     Email string `json:"email"`
 }
 
-func HandleUserCreated(key, value []byte) error {
+type UserCreatedHandler struct {
+    EmailService *email.Service
+}
+
+func NewUserCreatedHandler(es *email.Service) *UserCreatedHandler {
+    return &UserCreatedHandler{EmailService: es}
+}
+
+func (h *UserCreatedHandler) Handle(key, value []byte) error {
     var event UserCreatedEvent
     if err := json.Unmarshal(value, &event); err != nil {
         return err
     }
 
-    log.Printf("[Notification] Send welcome email to %s (User ID: %d)\n", event.Email, event.ID)
-    return nil
+    template := email.OnboardingEmail{
+        UserID: event.ID,
+        Email:  event.Email,
+    }
+
+    return h.EmailService.Send(event.Email, template)
 }
