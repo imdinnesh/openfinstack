@@ -22,6 +22,12 @@ func InitDB(cfg *config.Config) *gorm.DB {
 		log.Fatal("Failed to run migrations:", err)
 	}
 
+	// Auto migrate transaction table
+	err = db.AutoMigrate(&models.Transaction{})
+	if err != nil {
+		log.Fatal("Failed to run migrations:", err)
+	}
+
 	fmt.Println("Database connected & migrated successfully")
 	return db
 }
