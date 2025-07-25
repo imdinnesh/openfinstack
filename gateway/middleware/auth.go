@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	cache "github.com/imdinnesh/openfinstack/gateway/redis"
 	"github.com/imdinnesh/openfinstack/packages/redis"
 )
 
@@ -21,7 +22,7 @@ func NewAuthMiddleware(secret string, redisClient *redis.Client) *AuthMiddleware
 	}
 }
 
-func (a *AuthMiddleware) Handler() gin.HandlerFunc {
+func (auth *AuthMiddleware) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -39,7 +40,7 @@ func (a *AuthMiddleware) Handler() gin.HandlerFunc {
 
 		tokenStr := parts[1]
 		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			return []byte(a.JWTSecret), nil
+			return []byte(auth.JWTSecret), nil
 		})
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
@@ -48,7 +49,8 @@ func (a *AuthMiddleware) Handler() gin.HandlerFunc {
 		}
 
 		// Check blacklist in Redis
-		isBlacklisted, err := a.Redis.IsBlacklisted(tokenStr)
+		blackListCache := cache.NewBlacklistCache(auth.Redis)
+		isBlacklisted, err := blackListCache.IsTokenBlacklisted(tokenStr)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error checking token blacklist"})
 			c.Abort()
