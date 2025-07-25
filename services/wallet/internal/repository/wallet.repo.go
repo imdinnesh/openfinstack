@@ -14,12 +14,12 @@ import (
 )
 
 type WalletRepository interface {
-	CreateWallet(userID string) error
-	GetWalletByUserID(userID string) (*models.Wallet, error)
+	CreateWallet(userID uint) error
+	GetWalletByUserID(userID uint) (*models.Wallet, error)
 	AddFunds(ctx context.Context, userID uint, amount int64, desc string) error
 	WithdrawFunds(ctx context.Context, userID uint, amount int64, desc string) error
 	Transfer(ctx context.Context, fromUserID, toUserID uint, amount int64) error
-	GetTransactions(userID string, limit, offset int) ([]models.Transaction, error)
+	GetTransactions(userID uint, limit, offset int) ([]models.Transaction, error)
 }
 
 type walletRepo struct {
@@ -31,20 +31,14 @@ func New(db *gorm.DB, publisher events.WalletEventPublisher) WalletRepository {
 	return &walletRepo{db: db, publisher: publisher}
 }
 
-func (r *walletRepo) CreateWallet(userID string) error {
-	// Parse UUID properly with error handling
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		return fmt.Errorf("invalid userID format: %w", err)
-	}
-	
+func (r *walletRepo) CreateWallet(userID uint) error {
 	return r.db.Create(&models.Wallet{
-		UserID:  uid,
+		UserID:  userID,
 		Balance: 0,
 	}).Error
 }
 
-func (r *walletRepo) GetWalletByUserID(userID string) (*models.Wallet, error) {
+func (r *walletRepo) GetWalletByUserID(userID uint) (*models.Wallet, error) {
 	var wallet models.Wallet
 	err := r.db.Where("user_id = ?", userID).First(&wallet).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -239,7 +233,7 @@ func (r *walletRepo) Transfer(ctx context.Context, fromUserID, toUserID uint, am
 	return err
 }
 
-func (r *walletRepo) GetTransactions(userID string, limit, offset int) ([]models.Transaction, error) {
+func (r *walletRepo) GetTransactions(userID uint, limit, offset int) ([]models.Transaction, error) {
 	var wallet models.Wallet
 	if err := r.db.Where("user_id = ?", userID).First(&wallet).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

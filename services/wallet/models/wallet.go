@@ -8,8 +8,8 @@ import (
 
 type Wallet struct {
 	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	UserID    uuid.UUID `gorm:"type:uuid;uniqueIndex"`
-	Balance   int64      // Store in paisa/cents
+	UserID    uint      `gorm:"not null"`
+	Balance   int64     // Store in paisa/cents
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
