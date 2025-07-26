@@ -10,6 +10,7 @@ type KYCRepository interface {
 	GetByUserID(userID uint) ([]models.KYC, error)
 	GetPending() ([]models.KYC, error)
 	UpdateStatus(id uint, status string, rejectReason *string, verifiedBy uint) error
+	GetKYCByID(id uint) (*models.KYC, error)
 }
 
 type kycRepository struct {
@@ -45,4 +46,13 @@ func (r *kycRepository) UpdateStatus(id uint, status string, rejectReason *strin
 			"verified_at":   gorm.Expr("CURRENT_TIMESTAMP"),
 			"verified_by":   verifiedBy,
 		}).Error
+}
+
+func (r *kycRepository) GetKYCByID(id uint) (*models.KYC, error) {
+	var kyc models.KYC
+	err := r.db.First(&kyc, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &kyc, nil
 }

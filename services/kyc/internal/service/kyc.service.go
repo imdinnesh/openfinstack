@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/repository"
 	"github.com/imdinnesh/openfinstack/services/kyc/models"
 )
@@ -33,5 +35,14 @@ func (s *kycService) ListPending() ([]models.KYC, error) {
 }
 
 func (s *kycService) VerifyKYC(id uint, status string, reason *string, adminID uint) error {
-  return s.repo.UpdateStatus(id, status, reason, adminID)
+  kycRecord,err:=s.repo.GetKYCByID(id)
+  if err != nil {
+    return err
+  }
+
+  if kycRecord == nil {
+    return errors.New("KYC record not found")
+  }
+  
+  return s.repo.UpdateStatus(id,status, reason, adminID)
 }

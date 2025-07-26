@@ -100,7 +100,9 @@ func (h *KYCHandler) VerifyKYC(c *gin.Context) {
 		return
 	}
 
-	adminID := c.GetUint("user_id")
+	adminIDStr := c.Request.Header.Get("X-User-ID")
+	adminID64, _ := strconv.ParseUint(adminIDStr, 10, 64)
+	adminID := uint(adminID64)
 
 	if err := h.service.VerifyKYC(uint(id), req.Status, req.Reason, adminID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
