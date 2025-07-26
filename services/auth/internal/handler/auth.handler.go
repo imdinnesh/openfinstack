@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/imdinnesh/openfinstack/services/auth/internal/service"
@@ -102,3 +103,26 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Token revoked successfully"})
 }
+
+func (h *AuthHandler) Profile(c *gin.Context) {
+	userID, exists := c.Request.Header[http.CanonicalHeaderKey("X-User-Id")]
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+		return
+	}
+
+	userIDInt, err := strconv.ParseUint(userID[0], 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	user, err := h.authService.Profile(uint(userIDInt))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve user profile", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+

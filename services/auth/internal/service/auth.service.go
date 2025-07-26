@@ -18,6 +18,7 @@ type AuthService interface {
 	LoginUser(email, password string) (string, string, error)
 	RefreshToken(oldRefreshToken string) (string, string, error)
 	RevokeToken(token string) error
+	Profile(userID uint) (*models.User, error)
 }
 
 type authService struct {
@@ -116,5 +117,18 @@ func (s *authService) RefreshToken(oldRefreshToken string) (string, string, erro
 
 // RevokeToken adds token to Redis blacklist
 func (s *authService) RevokeToken(token string) error {
-	return s.redis.BlacklistToken(token, 7*24*time.Hour)
+	return s.redis.BlacklistToken(token, 15*time.Minute)
+}
+
+func (s *authService) Profile(userID uint) (*models.User, error) {
+	user, err := s.userRepo.FindById(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	return user, nil
 }

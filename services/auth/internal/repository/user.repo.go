@@ -9,6 +9,7 @@ type UserRepository interface {
 	CreateUser(user *models.User) error
 	FindByEmail(email string) (*models.User, error)
 	UpdatePassword(userID uint, newHash string) error
+	FindById(userID uint) (*models.User, error)
 }
 
 type userRepository struct {
@@ -35,4 +36,12 @@ func (r *userRepository) UpdatePassword(userID uint, newHash string) error {
 	return r.db.Model(&models.User{}).
 		Where("id = ?", userID).
 		Update("password_hash", newHash).Error
+}
+
+func (r *userRepository) FindById(userID uint) (*models.User, error) {
+	var user models.User
+	if err := r.db.First(&user, userID).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

@@ -25,4 +25,5 @@ func RegisterAuthRoutes(r *gin.RouterGroup, db *gorm.DB, cfg *config.Config, red
 	auth.POST("/login", authHandler.Login)
 	auth.POST("/refresh", authHandler.Refresh)
 	auth.POST("/logout",authHandler.Logout)
+	auth.GET("/profile",authHandler.Profile)
 }

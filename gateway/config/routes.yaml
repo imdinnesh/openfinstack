@@ -22,6 +22,11 @@ services:
         servicePath: "/auth/logout"
         middlewares: ["auth"]
 
+      - path: "/auth/profile"
+        method: "GET"
+        servicePath: "/auth/profile"
+        middlewares: ["auth"]
+
   - name: kyc
     baseURL: "http://localhost:8081/api/v1"
     routes:
