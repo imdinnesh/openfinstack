@@ -40,10 +40,7 @@ func NewAuthService(repo repository.UserRepository, cfg *config.Config, rds *red
 // RegisterUser hashes password and creates user
 func (s *authService) RegisterUser(email, password string) (*models.User, error) {
 
-	userExists, err := s.userRepo.FindByEmail(email)
-	if err != nil {
-		return nil, err
-	}
+	userExists, _ := s.userRepo.FindByEmail(email)
 	if userExists != nil {
 		return nil, errors.New("user already exists")
 	}
@@ -80,12 +77,12 @@ func (s *authService) LoginUser(email, password string) (string, string, error) 
 		return "", "", errors.New("invalid credentials")
 	}
 
-	accessToken, err := s.generateJWT(user.ID, 15*time.Minute)
+	accessToken, err := s.generateJWT(user.ID, 15*time.Minute,user.Role)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := s.generateJWT(user.ID, 7*24*time.Hour)
+	refreshToken, err := s.generateJWT(user.ID, 7*24*time.Hour, user.Role)
 	if err != nil {
 		return "", "", err
 	}
@@ -102,12 +99,12 @@ func (s *authService) RefreshToken(oldRefreshToken string) (string, string, erro
 
 	userID := uint(claims["user_id"].(float64))
 
-	accessToken, err := s.generateJWT(userID, 15*time.Minute)
+	accessToken, err := s.generateJWT(userID, 15*time.Minute,"user")
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := s.generateJWT(userID, 7*24*time.Hour)
+	refreshToken, err := s.generateJWT(userID, 7*24*time.Hour,"user")
 	if err != nil {
 		return "", "", err
 	}

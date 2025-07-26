@@ -43,9 +43,9 @@ services:
       - path: "/kyc/pending"
         method: "GET"
         servicePath: "/kyc-admin/pending"
-        middlewares: ["auth"]
+        middlewares: ["auth","admin"]
 
       - path: "/kyc/verify/:id"
         method: "POST"
         servicePath: "/kyc-admin/verify/:id"
-        middlewares: ["auth"]
+        middlewares: ["auth","admin"]

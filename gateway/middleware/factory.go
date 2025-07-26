@@ -14,10 +14,12 @@ type Registry struct {
 // NewRegistry builds and returns a Registry.
 func NewRegistry(cfgEnvs *config.ConfigVariables, redisClient *redis.Client) *Registry {
 	authMiddleware := NewAuthMiddleware(cfgEnvs.JWTSecret, redisClient)
+	adminMiddleware := NewAdminMiddleware(cfgEnvs.JWTSecret, redisClient)
 	rateLimiter := NewRateLimiter(redisClient.Client)
 	return &Registry{
 		Available: map[string]gin.HandlerFunc{
 			"auth":                authMiddleware.Handler(),
+			"admin":               adminMiddleware.Handler(),
 			"rateLimitAggressive": rateLimiter.Aggressive(),
 			"rateLimitModerate":   rateLimiter.Moderate(),
 			"rateLimitRelaxed":    rateLimiter.Relaxed(),
