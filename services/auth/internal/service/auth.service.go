@@ -38,6 +38,15 @@ func NewAuthService(repo repository.UserRepository, cfg *config.Config, rds *red
 
 // RegisterUser hashes password and creates user
 func (s *authService) RegisterUser(email, password string) (*models.User, error) {
+
+	userExists, err := s.userRepo.FindByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	if userExists != nil {
+		return nil, errors.New("user already exists")
+	}
+
 	hashed, err := utils.HashPassword(password)
 	if err != nil {
 		return nil, err
