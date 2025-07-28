@@ -69,6 +69,7 @@ func LoadENVS() *ConfigVariables {
 		ServerPort: getEnv("SERVER_PORT", "8080"),
 		RedisUrl:   getEnv("REDIS_URL", "localhost:6379"),
 		JWTSecret:  getEnv("JWT_SECRET", "supersecretkey"),
+		DBUrl:         getEnv("DB_URL", "postgres://profile:profile@localhost:5433/fintechdb_kyc"),
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)
