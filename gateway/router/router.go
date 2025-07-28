@@ -6,16 +6,18 @@ import (
 	"github.com/imdinnesh/openfinstack/gateway/discovery"
 	"github.com/imdinnesh/openfinstack/gateway/middleware"
 	"github.com/imdinnesh/openfinstack/packages/redis"
+	"gorm.io/gorm"
 )
 
 func SetupRouter(
 	cfg *config.Config,
 	cfgEnvs *config.ConfigVariables,
 	redisClient *redis.Client,
+	db *gorm.DB,
 ) *gin.Engine {
 	r := gin.Default()
-
-	middlewareRegistry := middleware.NewRegistry(cfgEnvs, redisClient)
+	
+	middlewareRegistry := middleware.NewRegistry(cfgEnvs, redisClient,db)
 
 	for _, svc := range cfg.Services {
 		for _, rt := range svc.Routes {
