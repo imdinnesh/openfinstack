@@ -54,9 +54,9 @@ func (a *ActiveKYCMiddleware) Handler() gin.HandlerFunc {
             _ = a.Cache.Set(userID, status, a.TTL)
         }
 
-        // 3) Enforce “active” only
-        if status != "active" {
-            c.JSON(http.StatusForbidden, gin.H{"error": "KYC is not active"})
+        // 3) Enforce “approved” only
+        if status != "approved" {
+            c.JSON(http.StatusForbidden, gin.H{"error": "KYC is not approved"})
             c.Abort()
             return
         }
