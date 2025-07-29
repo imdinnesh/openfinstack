@@ -12,6 +12,7 @@ type KYCService interface {
   GetUserKYC(userID uint) ([]models.KYC, error)
   ListPending() ([]models.KYC, error)
   VerifyKYC(id uint, status string, reason *string, adminID uint) error
+  GetKYCStatusByUserID(userID uint) (string, error)
 }
 
 type kycService struct {
@@ -45,4 +46,12 @@ func (s *kycService) VerifyKYC(id uint, status string, reason *string, adminID u
   }
   
   return s.repo.UpdateStatus(id,status, reason, adminID)
+}
+
+func (s *kycService) GetKYCStatusByUserID(userID uint) (string, error) {
+  status, err := s.repo.GetKYCStatusByUserID(userID)
+  if err != nil {
+    return "", err
+  }
+  return status, nil
 }

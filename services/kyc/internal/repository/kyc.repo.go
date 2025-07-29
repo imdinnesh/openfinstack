@@ -11,6 +11,7 @@ type KYCRepository interface {
 	GetPending() ([]models.KYC, error)
 	UpdateStatus(id uint, status string, rejectReason *string, verifiedBy uint) error
 	GetKYCByID(id uint) (*models.KYC, error)
+	GetKYCStatusByUserID(userID uint) (string, error)
 }
 
 type kycRepository struct {
@@ -55,4 +56,13 @@ func (r *kycRepository) GetKYCByID(id uint) (*models.KYC, error) {
 		return nil, err
 	}
 	return &kyc, nil
+}
+
+func (r *kycRepository) GetKYCStatusByUserID(userID uint) (string, error) {
+	var kyc models.KYC
+	err := r.db.Select("status").Where("user_id = ?", userID).First(&kyc).Error
+	if err != nil {
+		return "", err
+	}
+	return kyc.Status, nil
 }

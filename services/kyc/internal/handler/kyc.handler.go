@@ -111,3 +111,22 @@ func (h *KYCHandler) VerifyKYC(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "KYC status updated"})
 }
+
+func (h *KYCHandler) GetKYCStatusByUserID(c *gin.Context) {
+	userIDStr := c.Request.Header.Get("X-User-ID")
+	userID64, _ := strconv.ParseUint(userIDStr, 10, 64)
+	userID := uint(userID64)
+
+	if userID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		return
+	}
+
+	status, err := h.service.GetKYCStatusByUserID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": status})
+}
