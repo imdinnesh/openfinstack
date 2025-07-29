@@ -51,6 +51,7 @@ type ConfigVariables struct {
 	SMTPPort     string
 	SMTPUser     string
 	SMTPPassword string
+	KYCBaseURL string
 }
 
 func LoadENVS() *ConfigVariables {
@@ -70,6 +71,7 @@ func LoadENVS() *ConfigVariables {
 		RedisUrl:   getEnv("REDIS_URL", "localhost:6379"),
 		JWTSecret:  getEnv("JWT_SECRET", "supersecretkey"),
 		DBUrl:         getEnv("DB_URL", "postgres://profile:profile@localhost:5433/fintechdb_kyc"),
+		KYCBaseURL: getEnv("KYC_BASE_URL", "http://localhost:8081"),
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)

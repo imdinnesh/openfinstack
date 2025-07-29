@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
+	"github.com/imdinnesh/openfinstack/gateway/clients"
 	"github.com/imdinnesh/openfinstack/gateway/config"
-	"github.com/imdinnesh/openfinstack/gateway/db"
 	"github.com/imdinnesh/openfinstack/gateway/router"
 	"github.com/imdinnesh/openfinstack/packages/redis"
 )
@@ -15,8 +15,8 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 	cfgEnvs := config.LoadENVS()
-	db := db.InitDB(cfgEnvs)
+	kycClient:=clients.NewClient(cfgEnvs.KYCBaseURL)
 	redisClient := redis.NewClient(cfgEnvs.RedisUrl)
-	r := router.SetupRouter(cfg,cfgEnvs,redisClient,db)
+	r := router.SetupRouter(cfg,cfgEnvs,redisClient,kycClient)
 	r.Run(":8000")
 }
