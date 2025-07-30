@@ -1,4 +1,4 @@
-package auth
+package oauth
 
 import (
 	"github.com/imdinnesh/openfinstack/services/auth/internal/oauth/providers/google"

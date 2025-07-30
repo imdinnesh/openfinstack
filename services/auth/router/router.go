@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/imdinnesh/openfinstack/services/auth/config"
+	"github.com/imdinnesh/openfinstack/services/auth/internal/oauth"
 	"github.com/imdinnesh/openfinstack/services/auth/internal/routes"
 	"github.com/imdinnesh/openfinstack/services/auth/redis"
 	"gorm.io/gorm"
@@ -22,6 +23,7 @@ func New(cfg *config.Config, db *gorm.DB, redisClient *redis.Client) *gin.Engine
 
 	public := router.Group("/api/v1")
 	routes.RegisterAuthRoutes(public, db, cfg, redisClient)
+	oauth.RegisterOAuthRoutes(public, db)
 
 	return router
 }
