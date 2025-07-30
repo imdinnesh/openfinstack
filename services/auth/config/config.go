@@ -17,6 +17,9 @@ type Config struct {
 	SMTPPort      string
 	SMTPUser      string
 	SMTPPassword  string
+	GoogleClientID   string
+	GoogleClientSecret string
+	GoogleRedirectURL string
 }
 
 func Load() *Config {
@@ -40,6 +43,9 @@ func Load() *Config {
 		SMTPPort:      getEnv("SMTP_PORT", "587"),
 		SMTPUser:      getEnv("SMTP_USER", ""),
 		SMTPPassword:  getEnv("SMTP_PASSWORD", ""),
+		GoogleClientID:   getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+		GoogleRedirectURL: getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/api/v1/auth/google/callback"),
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)
