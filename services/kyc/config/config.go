@@ -13,6 +13,9 @@ type Config struct {
 	RedisUrl   string
 	JWTSecret  string
 	ServerPort string
+	KYCVerifier string // "mock", "idfy", or "karza"
+	IDFYApiKey string // Used if KYCVerifier is "idfy"
+	IDFYBaseURL string // Used if KYCVerifier is "idfy"
 }
 
 func Load() *Config {
@@ -32,6 +35,9 @@ func Load() *Config {
 		DBUrl:         getEnv("DB_URL", "postgres://profile:profile@localhost:5433/fintechdb_kyc"),
 		RedisUrl:      getEnv("REDIS_URL", "localhost:6379"),
 		JWTSecret:     getEnv("JWT_SECRET", "supersecretkey"),
+		KYCVerifier:   getEnv("KYC_VERIFIER", "mock"),
+		IDFYApiKey:    getEnv("IDFY_API_KEY", ""),
+		IDFYBaseURL:   getEnv("IDFY_BASE_URL", "https://api.idfy.com"),
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)
