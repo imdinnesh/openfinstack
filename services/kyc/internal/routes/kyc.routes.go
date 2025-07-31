@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/imdinnesh/openfinstack/services/kyc/config"
+	"github.com/imdinnesh/openfinstack/services/kyc/internal/events"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/handler"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/repository"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/service"
@@ -13,7 +14,8 @@ import (
 func RegisterKYCRoutes(r *gin.RouterGroup, db *gorm.DB, cfg *config.Config) {
 	kycRepo := repository.NewKYCRepository(db)
 	verifier := provider.NewVerifier(cfg)
-	kycSvc := service.NewKYCService(kycRepo, verifier)
+	publisher := events.NewKYCEventPublisher()
+	kycSvc := service.NewKYCService(kycRepo, verifier, publisher)
 	kycHandler := handler.NewKYCHandler(kycSvc)
 
 	kyc := r.Group("/kyc")

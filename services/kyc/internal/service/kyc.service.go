@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/imdinnesh/openfinstack/services/kyc/internal/events"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/repository"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/verifier"
 	"github.com/imdinnesh/openfinstack/services/kyc/models"
@@ -19,12 +20,14 @@ type KYCService interface {
 type kycService struct {
 	repo     repository.KYCRepository
 	verifier verifier.Verifier
+	events   *events.KYCEventPublisher
 }
 
-func NewKYCService(repo repository.KYCRepository, v verifier.Verifier) *kycService {
+func NewKYCService(repo repository.KYCRepository, v verifier.Verifier, e *events.KYCEventPublisher) *kycService {
 	return &kycService{
 		repo:     repo,
 		verifier: v,
+		events:   e,
 	}
 }
 func (s *kycService) SubmitKYC(kyc *models.KYC) error {
@@ -32,27 +35,12 @@ func (s *kycService) SubmitKYC(kyc *models.KYC) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
-	result, err := s.verifier.Verify(ctx, verifier.VerificationInput{
-		DocumentType: kyc.DocumentType,
-		DocumentURL:  kyc.DocumentURL,
-	})
-	if err != nil {
-		return err  
+
+	// Publish the KYC submission event
+	if err := s.events.PublishKYCDocumentSubmitted(context.Background(), kyc.DocumentType, kyc.DocumentURL); err != nil {
+		return err
 	}
-
-  if !result.Verified{
-    s.repo.UpdateStatus(kyc.ID, "rejected", &result.RejectReason, 0)
-    return errors.New("KYC verification failed: " + result.RejectReason)
-  }
-
-  // Update KYC status to verified
-  err = s.repo.UpdateStatus(kyc.ID, "approved", nil, 0)
-  if err != nil {
-    return err
-  }
-  return nil
-
+	return nil
 }
 
 func (s *kycService) GetUserKYC(userID uint) ([]models.KYC, error) {
