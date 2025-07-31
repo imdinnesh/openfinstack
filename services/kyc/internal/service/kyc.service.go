@@ -37,7 +37,7 @@ func (s *kycService) SubmitKYC(kyc *models.KYC) error {
 	}
 
 	// Publish the KYC submission event
-	if err := s.events.PublishKYCDocumentSubmitted(context.Background(), kyc.DocumentType, kyc.DocumentURL); err != nil {
+	if err := s.events.PublishKYCDocumentSubmitted(context.Background(), kyc.ID, kyc.DocumentType, kyc.DocumentURL); err != nil {
 		return err
 	}
 	return nil

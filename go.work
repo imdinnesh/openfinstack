@@ -6,6 +6,7 @@ use (
 	./services/kyc
 	./services/wallet
 	./services/notification
+	./services/verification
 	./pkg/logger
 	./pkg/config
 	./pkg/middleware

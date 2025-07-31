@@ -1,0 +1,33 @@
+package app
+
+import (
+	"context"
+
+	"github.com/imdinnesh/openfinstack/packages/kafka"
+	"github.com/imdinnesh/openfinstack/packages/logger"
+	"github.com/imdinnesh/openfinstack/services/verifications/config"
+	consumer "github.com/imdinnesh/openfinstack/services/verifications/events"
+	"github.com/imdinnesh/openfinstack/services/verifications/service"
+	"github.com/imdinnesh/openfinstack/services/verifications/verifier/provider"
+)
+
+func Run(ctx context.Context, cfg *config.Config) {
+	dispatch := kafka.NewDispatcher()
+	verifier := provider.NewVerifier(cfg)
+	verifierService := service.NewService(verifier)
+	kycHandler := consumer.NewKYCHandler(verifierService)
+
+	dispatch.RegisterHandler("kyc.submitted", kycHandler.Handle)
+
+	consumer := kafka.NewConsumer("localhost:9092", "verification-group", []string{"kyc.submitted"}, dispatch)
+
+	ctx, cancel := context.WithCancel(ctx)
+
+	go func() {
+		if err := consumer.Start(ctx); err != nil {
+			logger.Log.Fatal().Err(err).Msg("[Kafka] Consumer error")
+		}
+	}()
+
+	waitForShutdown(cancel)
+}

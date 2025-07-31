@@ -8,6 +8,7 @@ import (
 )
 
 type KYCDocumentSubmittedEvent struct {
+    KYCID       uint   `json:"kyc_id"`
     DocumentType string `json:"document_type"`
 	DocumentURL  string `json:"document_url"`
 }
@@ -22,8 +23,9 @@ func NewKYCEventPublisher() *KYCEventPublisher {
     }
 }
 
-func (p *KYCEventPublisher) PublishKYCDocumentSubmitted(ctx context.Context, documentType, documentURL string) error {
+func (p *KYCEventPublisher) PublishKYCDocumentSubmitted(ctx context.Context, kycID uint, documentType, documentURL string) error {
     event := KYCDocumentSubmittedEvent{
+        KYCID:       kycID,
         DocumentType: documentType,
         DocumentURL:  documentURL,
     }
