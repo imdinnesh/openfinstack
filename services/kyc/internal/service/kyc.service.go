@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/imdinnesh/openfinstack/services/kyc/config"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/events"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/repository"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/verifier"
@@ -36,10 +38,18 @@ func (s *kycService) SubmitKYC(kyc *models.KYC) error {
 		return err
 	}
 
-	// Publish the KYC submission event
+	VerificationMethod := config.Load().KYCVerifier
+	fmt.Println("KYC Verification Method:", VerificationMethod)
+	// If Manual Verification is enabled, skip automatic verification
+	if VerificationMethod == config.KYCVerifierManual {
+		fmt.Println("Manual verification enabled, skipping automatic verification for KYC ID:", kyc.ID)
+		return nil
+	}
+
 	if err := s.events.PublishKYCDocumentSubmitted(context.Background(), kyc.ID, kyc.DocumentType, kyc.DocumentURL); err != nil {
 		return err
 	}
+	fmt.Println("KYC document submitted event published for KYC ID:", kyc.ID)
 	return nil
 }
 

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -33,7 +32,6 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 	userIDStr := c.Request.Header.Get("X-User-ID")
 	userID64, _ := strconv.ParseUint(userIDStr, 10, 64)
 	userID := uint(userID64)
-	fmt.Println("User ID:", userID64)
 	input := &models.KYC{	
 		UserID:       userID,
 		DocumentType: req.DocumentType,

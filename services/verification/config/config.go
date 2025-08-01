@@ -39,7 +39,7 @@ func Load() *Config {
 		KYCVerifier:   getEnv("KYC_VERIFIER", "mock"),
 		IDFYApiKey:    getEnv("IDFY_API_KEY", ""),
 		IDFYBaseURL:   getEnv("IDFY_BASE_URL", "https://api.idfy.com"),
-		DBUrl:         getEnv("DB_URL", "postgres://profile:profile@localhost:5433/fintechdb_kyc"),
+		DBUrl:         getEnv("DB_URL", "postgres://kyc:kyc@localhost:5433/fintechdb_kyc"),
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)
