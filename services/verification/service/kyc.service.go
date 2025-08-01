@@ -4,11 +4,13 @@ import (
 	"context"
 	"log"
 
+	repository "github.com/imdinnesh/openfinstack/services/verifications/repo"
 	"github.com/imdinnesh/openfinstack/services/verifications/verifier"
 )
 
 type Service struct {
     Verifier verifier.Verifier
+	KYCRepo repository.KYCRepository
 }
 
 type KYCDocumentSubmittedEvent struct {
@@ -17,9 +19,10 @@ type KYCDocumentSubmittedEvent struct {
 	DocumentURL  string `json:"document_url"`
 }
 
-func NewService(verifier verifier.Verifier) *Service {
+func NewService(verifier verifier.Verifier, kycRepo repository.KYCRepository) *Service {
     return &Service{
 		Verifier: verifier,
+		KYCRepo: kycRepo,
 	}
 }
 
