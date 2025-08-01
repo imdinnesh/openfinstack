@@ -19,8 +19,8 @@ func Run(ctx context.Context, cfg *config.Config) {
 		cfg.SMTPPort)
 
 	emailService := email.NewService(smtpSender)
-	userHandler := consumer.NewUserCreatedHandler(emailService)
-	kycHandler := consumer.NewKycStatusHandler(emailService)
+	userHandler := events.NewUserCreatedHandler(emailService)
+	kycHandler := events.NewKycStatusHandler(emailService)
 	dispatch.RegisterHandler("user.created", userHandler.Handle)
 	dispatch.RegisterHandler("kyc.status", kycHandler.Handle)
 
