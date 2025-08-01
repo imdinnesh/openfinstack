@@ -13,9 +13,10 @@ type Config struct {
 	SMTPPort      string
 	SMTPUser      string
 	SMTPPassword  string
-	KYCVerifier string // "mock", "idfy", or "karza"
+	KYCVerifier string // "manual" "mock", "idfy", or "karza"
 	IDFYApiKey string // Used if KYCVerifier is "idfy"
 	IDFYBaseURL string // Used if KYCVerifier is "idfy"
+	DBUrl     string // Database connection string
 }
 
 func Load() *Config {
@@ -38,6 +39,7 @@ func Load() *Config {
 		KYCVerifier:   getEnv("KYC_VERIFIER", "mock"),
 		IDFYApiKey:    getEnv("IDFY_API_KEY", ""),
 		IDFYBaseURL:   getEnv("IDFY_BASE_URL", "https://api.idfy.com"),
+		DBUrl:         getEnv("DB_URL", "postgres://profile:profile@localhost:5433/fintechdb_kyc"),
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)

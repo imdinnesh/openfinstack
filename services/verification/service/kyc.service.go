@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 
-
 	"github.com/imdinnesh/openfinstack/services/verifications/verifier"
 )
 
@@ -19,7 +18,9 @@ type KYCDocumentSubmittedEvent struct {
 }
 
 func NewService(verifier verifier.Verifier) *Service {
-    return &Service{Verifier: verifier}
+    return &Service{
+		Verifier: verifier,
+	}
 }
 
 func (s *Service) VerifyKYC(kycDocument *KYCDocumentSubmittedEvent) error {

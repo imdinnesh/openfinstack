@@ -9,9 +9,10 @@ import (
 	consumer "github.com/imdinnesh/openfinstack/services/verifications/events"
 	"github.com/imdinnesh/openfinstack/services/verifications/service"
 	"github.com/imdinnesh/openfinstack/services/verifications/verifier/provider"
+	"gorm.io/gorm"
 )
 
-func Run(ctx context.Context, cfg *config.Config) {
+func Run(ctx context.Context, cfg *config.Config,db *gorm.DB) {
 	dispatch := kafka.NewDispatcher()
 	verifier := provider.NewVerifier(cfg)
 	verifierService := service.NewService(verifier)
