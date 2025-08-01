@@ -20,10 +20,11 @@ func Run(ctx context.Context, cfg *config.Config) {
 
 	emailService := email.NewService(smtpSender)
 	userHandler := consumer.NewUserCreatedHandler(emailService)
-
+	kycHandler := consumer.NewKycStatusHandler(emailService)
 	dispatch.RegisterHandler("user.created", userHandler.Handle)
+	dispatch.RegisterHandler("kyc.status", kycHandler.Handle)
 
-	consumer := kafka.NewConsumer("localhost:9092", "notification-group", []string{"user.created"}, dispatch)
+	consumer := kafka.NewConsumer("localhost:9092", "notification-group", []string{"user.created", "kyc.status"}, dispatch)
 
 	ctx, cancel := context.WithCancel(ctx)
 
