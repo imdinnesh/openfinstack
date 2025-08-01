@@ -31,4 +31,36 @@ func (e OnboardingEmail) Body() string {
     `, e.UserID)
 }
 
-// Add other types like ResetPasswordEmail, InviteEmail, etc. similarly
+type KYCStatusEmail struct {
+    UserID uint
+    Email  string
+    Status string // e.g. "Approved", "Rejected", "Pending"
+    Reason string // Optional: reason for rejection or additional info
+}
+
+func (e KYCStatusEmail) Subject() string {
+    return fmt.Sprintf("Your KYC Status: %s", e.Status)
+}
+
+func (e KYCStatusEmail) Body() string {
+    body := fmt.Sprintf(`
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2>KYC Status Update 📄</h2>
+            <p>Hi there,</p>
+            <p>Your KYC process has been <strong>%s</strong>.</p>
+            <p><strong>User ID:</strong> %d</p>`, e.Status, e.UserID)
+
+    if e.Status == "Rejected" && e.Reason != "" {
+        body += fmt.Sprintf(`
+            <p><strong>Reason:</strong> %s</p>
+            <p>Please review the above and resubmit your KYC information if needed.</p>`, e.Reason)
+    }
+
+    body += `
+            <p>If you have any questions, feel free to reach out to our support team.</p>
+            <p>Thank you,<br/>The OpenFinstack Team</p>
+        </div>
+    `
+
+    return body
+}
