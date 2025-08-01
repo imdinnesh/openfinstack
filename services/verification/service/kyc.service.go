@@ -37,8 +37,23 @@ func (s *Service) VerifyKYC(kycDocument *KYCDocumentSubmittedEvent) error {
 		log.Printf("[KYCService] Error verifying KYC for document ID: %d, error: %v", kycDocument.KYCID, err)
 		return err
 	}
-	log.Printf("[KYCService] Successfully verified KYC for document ID: %d, result: %v", kycDocument.KYCID, result)
 	// Update the KYC document status
+	if result.Verified{
+		log.Printf("[KYCService] KYC document ID: %d verified successfully", kycDocument.KYCID)
+		err = s.KYCRepo.UpdateStatus(kycDocument.KYCID, "approved", nil, 0)
+		if err != nil {
+			log.Printf("[KYCService] Error updating KYC status for document ID: %d, error: %v", kycDocument.KYCID, err)
+			return err
+		}
+	} else {
+		log.Printf("[KYCService] KYC document ID: %d verification failed", kycDocument.KYCID)
+		reason := "Verification failed"
+		err = s.KYCRepo.UpdateStatus(kycDocument.KYCID, "rejected", &reason, 0)
+		if err != nil {
+			log.Printf("[KYCService] Error updating KYC status for document ID: %d, error: %v", kycDocument.KYCID, err)
+			return err
+		}
+	}
 	return nil
 
 }
