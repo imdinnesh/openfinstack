@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	clients "github.com/imdinnesh/openfinstack/services/kyc/client"
 	"github.com/imdinnesh/openfinstack/services/kyc/config"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/events"
 	"github.com/imdinnesh/openfinstack/services/kyc/internal/repository"
@@ -24,13 +25,15 @@ type kycService struct {
 	repo     repository.KYCRepository
 	verifier verifier.Verifier
 	events   *events.KYCEventPublisher
+	client   *clients.Client
 }
 
-func NewKYCService(repo repository.KYCRepository, v verifier.Verifier, e *events.KYCEventPublisher) *kycService {
+func NewKYCService(repo repository.KYCRepository, v verifier.Verifier, e *events.KYCEventPublisher, c *clients.Client) *kycService {
 	return &kycService{
 		repo:     repo,
 		verifier: v,
 		events:   e,
+		client:   c,
 	}
 }
 func (s *kycService) SubmitKYC(kyc *models.KYC) error {
@@ -72,7 +75,30 @@ func (s *kycService) VerifyKYC(id uint, status string, reason *string, adminID u
 		return errors.New("KYC record not found")
 	}
 
-	return s.repo.UpdateStatus(id, status, reason, adminID)
+	err = s.repo.UpdateStatus(id, status, reason, adminID)
+	if err != nil {
+		return err
+	}
+
+	// Get profile details for the user
+	userProfile, err := s.client.GetUserProfile(kycRecord.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to get user profile: %w", err)
+	}
+
+	// Safe dereference of reason
+	var reasonStr string
+	if reason != nil {
+		reasonStr = *reason
+	}
+
+	// Notify via event
+	if err := s.events.PublishKYCStatus(context.Background(), kycRecord.UserID, userProfile.Email, status, reasonStr); err != nil {
+		return fmt.Errorf("failed to publish KYC status event: %w", err)
+	}
+	fmt.Println("KYC status event published for user ID:", kycRecord.UserID)
+
+	return nil
 }
 
 func (s *kycService) GetKYCStatusByUserID(userID uint) (string, error) {
@@ -96,6 +122,22 @@ func (s *kycService) UpdateKYCStatus(id uint, status string, reason *string, adm
 	if err := s.repo.UpdateStatus(id, status, reason, adminID); err != nil {
 		return err
 	}
+
+	userProfile, err := s.client.GetUserProfile(kycRecord.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to get user profile: %w", err)
+	}
+	
+	var reasonStr string
+	if reason != nil {
+		reasonStr = *reason
+	}
+
+	// Notify via event
+	if err := s.events.PublishKYCStatus(context.Background(), kycRecord.UserID, userProfile.Email, status, reasonStr); err != nil {
+		return fmt.Errorf("failed to publish KYC status event: %w", err)
+	}
+	fmt.Println("KYC status event published for user ID:", kycRecord.UserID)
 
 	return nil
 }

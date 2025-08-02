@@ -123,6 +123,14 @@ func (h *AuthHandler) Profile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user": user})
+	type UserProfile struct {
+		ID    uint   `json:"id"`
+		Email string `json:"email"`
+	}
+
+	c.JSON(http.StatusOK, UserProfile{
+		ID:    user.ID,
+		Email: user.Email,
+	})
 }
 

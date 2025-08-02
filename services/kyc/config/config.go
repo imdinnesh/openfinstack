@@ -38,6 +38,7 @@ type Config struct {
 	KYCVerifier KYCVerifierType
 	IDFYApiKey  string // Only if KYCVerifier is "idfy"
 	IDFYBaseURL string // Only if KYCVerifier is "idfy"
+	UserServiceURL string // URL for user service, used in KYC operations
 }
 
 // Load reads and validates the environment variables, returning the Config
@@ -67,6 +68,7 @@ func Load() *Config {
 		KYCVerifier: verifier,
 		IDFYApiKey:  getEnv("IDFY_API_KEY", ""),
 		IDFYBaseURL: getEnv("IDFY_BASE_URL", "https://api.idfy.com"),
+		UserServiceURL: getEnv("USER_SERVICE_URL", "http://localhost:8080"),
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)
