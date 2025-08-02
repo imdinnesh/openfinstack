@@ -22,6 +22,7 @@ func RegisterKYCRoutes(r *gin.RouterGroup, db *gorm.DB, cfg *config.Config) {
 	kyc.POST("/submit", kycHandler.SubmitKYC)
 	kyc.GET("/user", kycHandler.GetUserKYC)
 	kyc.GET("/status", kycHandler.GetKYCStatusByUserID)
+	kyc.POST("/update/:id", kycHandler.UpdateKYCStatus)
 	kycAdmin := r.Group("kyc-admin")
 	kycAdmin.GET("/pending", kycHandler.ListPending)
 	kycAdmin.POST("/verify/:id", kycHandler.VerifyKYC)
