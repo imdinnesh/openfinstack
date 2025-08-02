@@ -17,6 +17,7 @@ type Config struct {
 	IDFYApiKey string // Used if KYCVerifier is "idfy"
 	IDFYBaseURL string // Used if KYCVerifier is "idfy"
 	DBUrl     string // Database connection string
+	KYCBaseURL string
 }
 
 func Load() *Config {
@@ -40,6 +41,7 @@ func Load() *Config {
 		IDFYApiKey:    getEnv("IDFY_API_KEY", ""),
 		IDFYBaseURL:   getEnv("IDFY_BASE_URL", "https://api.idfy.com"),
 		DBUrl:         getEnv("DB_URL", "postgres://kyc:kyc@localhost:5433/fintechdb_kyc"),
+		KYCBaseURL: getEnv("KYC_BASE_URL", "http://localhost:8081"),
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)

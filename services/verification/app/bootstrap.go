@@ -5,6 +5,7 @@ import (
 
 	"github.com/imdinnesh/openfinstack/packages/kafka"
 	"github.com/imdinnesh/openfinstack/packages/logger"
+	clients "github.com/imdinnesh/openfinstack/services/verifications/client"
 	"github.com/imdinnesh/openfinstack/services/verifications/config"
 	consumer "github.com/imdinnesh/openfinstack/services/verifications/events"
 	repository "github.com/imdinnesh/openfinstack/services/verifications/repo"
@@ -17,7 +18,8 @@ func Run(ctx context.Context, cfg *config.Config,db *gorm.DB) {
 	dispatch := kafka.NewDispatcher()
 	verifier := provider.NewVerifier(cfg)
 	kycRepo := repository.NewKYCRepository(db)
-	verifierService := service.NewService(verifier, kycRepo)
+	kycClient := clients.NewClient(cfg.KYCBaseURL)
+	verifierService := service.NewService(verifier, kycRepo, kycClient)
 	kycHandler := consumer.NewKYCHandler(verifierService)
 
 	dispatch.RegisterHandler("kyc.submitted", kycHandler.Handle)
