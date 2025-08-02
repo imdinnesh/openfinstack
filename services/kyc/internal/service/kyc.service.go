@@ -18,6 +18,7 @@ type KYCService interface {
 	ListPending() ([]models.KYC, error)
 	VerifyKYC(id uint, status string, reason *string, adminID uint) error
 	GetKYCStatusByUserID(userID uint) (string, error)
+	UpdateKYCStatus(id uint, status string, reason *string, adminID uint) error
 }
 type kycService struct {
 	repo     repository.KYCRepository
@@ -80,4 +81,21 @@ func (s *kycService) GetKYCStatusByUserID(userID uint) (string, error) {
 		return "", err
 	}
 	return status, nil
+}
+
+func (s *kycService) UpdateKYCStatus(id uint, status string, reason *string, adminID uint) error {
+	kycRecord, err := s.repo.GetKYCByID(id)
+	if err != nil {
+		return err
+	}
+
+	if kycRecord == nil {
+		return errors.New("KYC record not found")
+	}
+
+	if err := s.repo.UpdateStatus(id, status, reason, adminID); err != nil {
+		return err
+	}
+
+	return nil
 }

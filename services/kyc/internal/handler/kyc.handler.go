@@ -128,3 +128,33 @@ func (h *KYCHandler) GetKYCStatusByUserID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": status})
 }
+
+func (h *KYCHandler) UpdateKYCStatus(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid KYC ID"})
+		return
+	}
+
+	var req struct {
+		Status string  `json:"status" binding:"required"`
+		Reason *string `json:"reason"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	adminIDStr := c.Request.Header.Get("X-User-ID")
+	adminID64, _ := strconv.ParseUint(adminIDStr, 10, 64)
+	adminID := uint(adminID64)
+
+	if err := h.service.UpdateKYCStatus(uint(id), req.Status, req.Reason, adminID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "KYC status updated"})
+}
