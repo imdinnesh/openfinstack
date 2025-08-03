@@ -5,22 +5,19 @@ import (
 	"gorm.io/gorm"
 )
 
-func AddMoreKYCFields20250803() *gormigrate.Migration {
+func AddCityFields20250803() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "20250803_add_kyc_fields",
+		ID: "20250803_add_city_fields",
 		Migrate: func(tx *gorm.DB) error {
 			return tx.Transaction(func(tx *gorm.DB) error {
 				// Step 1: Add new columns as nullable
 				err := tx.Exec(`
 					ALTER TABLE kycs
-					ADD COLUMN full_name TEXT,
-					ADD COLUMN date_of_birth TEXT,
-					ADD COLUMN gender TEXT,
-					ADD COLUMN address_line1 TEXT,
-					ADD COLUMN address_line2 TEXT,
 					ADD COLUMN city TEXT,
-					ADD COLUMN state TEXT,
-					ADD COLUMN pincode TEXT;
+					ADD COLUMN pincode TEXT,
+					DROP COLUMN district,
+					DROP COLUMN photo_id_type,
+					DROP COLUMN photo_id_number
 				`).Error
 				if err != nil {
 					return err
@@ -30,12 +27,7 @@ func AddMoreKYCFields20250803() *gormigrate.Migration {
 				err = tx.Exec(`
 					UPDATE kycs
 					SET
-						full_name = 'Unknown',
-						date_of_birth = '1970-01-01',
-						gender = 'Other',
-						address_line1 = 'N/A',
 						city = 'Unknown',
-						state = 'Unknown',
 						pincode = '000000'
 					WHERE full_name IS NULL;
 				`).Error
@@ -46,12 +38,7 @@ func AddMoreKYCFields20250803() *gormigrate.Migration {
 				// Step 3: Set columns as NOT NULL
 				return tx.Exec(`
 					ALTER TABLE kycs
-					ALTER COLUMN full_name SET NOT NULL,
-					ALTER COLUMN date_of_birth SET NOT NULL,
-					ALTER COLUMN gender SET NOT NULL,
-					ALTER COLUMN address_line1 SET NOT NULL,
 					ALTER COLUMN city SET NOT NULL,
-					ALTER COLUMN state SET NOT NULL,
 					ALTER COLUMN pincode SET NOT NULL;
 				`).Error
 			})

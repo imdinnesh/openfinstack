@@ -12,6 +12,8 @@ import (
 func AllMigrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
 		migrations.AddMoreKYCFields20250803(),
+		migrations.AddCityFields20250803(),
+
 	}
 }
 
