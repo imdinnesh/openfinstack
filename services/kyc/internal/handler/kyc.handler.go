@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -19,24 +20,52 @@ func NewKYCHandler(s service.KYCService) *KYCHandler {
 
 // SubmitKYC handles submission of KYC by user
 func (h *KYCHandler) SubmitKYC(c *gin.Context) {
-	var req struct {
-		DocumentType string `json:"document_type" binding:"required"`
-		DocumentURL  string `json:"document_url" binding:"required"`
+	userIDStr := c.Request.Header.Get("X-User-ID")
+	userID64, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
 	}
+	userID := uint(userID64)
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// Parse form data
+	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form data"})
 		return
 	}
 
-	userIDStr := c.Request.Header.Get("X-User-ID")
-	userID64, _ := strconv.ParseUint(userIDStr, 10, 64)
-	userID := uint(userID64)
-	input := &models.KYC{	
-		UserID:       userID,
-		DocumentType: req.DocumentType,
-		DocumentURL:  req.DocumentURL,
-		Status:       "pending",
+	// Extract file
+	file, fileHeader, err := c.Request.FormFile("document")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Document file is required"})
+		return
+	}
+	defer file.Close()
+
+	// TODO: Upload file to storage and get public URL
+	documentURL := fmt.Sprintf("https://yourcdn.com/uploads/%s", fileHeader.Filename) // Mock URL
+
+	// Extract fields
+	input := &models.KYC{
+		UserID:        userID,
+		FullName:      c.PostForm("full_name"),
+		DateOfBirth:   c.PostForm("date_of_birth"),
+		Gender:        c.PostForm("gender"),
+		AddressLine1:  c.PostForm("address_line1"),
+		AddressLine2:  c.PostForm("address_line2"),
+		City:          c.PostForm("city"),
+		State:         c.PostForm("state"),
+		Pincode:       c.PostForm("pincode"),
+		DocumentType:  c.PostForm("document_type"),
+		DocumentURL:   documentURL,
+		Status:        "pending",
+	}
+
+	// (Optional) Validate required fields manually
+	if input.FullName == "" || input.DateOfBirth == "" || input.Gender == "" || input.AddressLine1 == "" ||
+		input.City == "" || input.State == "" || input.Pincode == "" || input.DocumentType == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "All required fields must be filled"})
+		return
 	}
 
 	if err := h.service.SubmitKYC(input); err != nil {
@@ -44,7 +73,7 @@ func (h *KYCHandler) SubmitKYC(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "KYC submitted"})
+	c.JSON(http.StatusCreated, gin.H{"message": "KYC submitted successfully"})
 }
 
 // GetUserKYC returns KYC records of the logged-in user

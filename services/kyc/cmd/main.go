@@ -17,10 +17,10 @@ import (
 func main() {
 	Logger.Log.Info().Msg("Starting KYC Service")
 	cfg := config.Load()
-	db := db.InitDB(cfg)
-	
+	database := db.InitDB(cfg)
+	db.RunMigrations(database)
 	// Set up router (Gin)
-	Router := router.New(cfg, db)
+	Router := router.New(cfg, database)
 
 	// Create custom HTTP server
 	srv := &http.Server{
