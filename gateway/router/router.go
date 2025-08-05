@@ -1,12 +1,15 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/imdinnesh/openfinstack/gateway/clients"
 	"github.com/imdinnesh/openfinstack/gateway/config"
 	"github.com/imdinnesh/openfinstack/gateway/discovery"
 	"github.com/imdinnesh/openfinstack/gateway/middleware"
 	"github.com/imdinnesh/openfinstack/packages/redis"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func SetupRouter(
@@ -15,8 +18,21 @@ func SetupRouter(
 	redisClient *redis.Client,
 	kycClient *clients.Client,
 ) *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
 
+	// Global middleware
+	r.Use(gin.Recovery())
+	r.Use(middleware.MetricsMiddleware())
+
+	// Expose Prometheus metrics endpoint
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	// Health check route
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+	})
+
+	// Dynamic routing from config
 	middlewareRegistry := middleware.NewRegistry(cfgEnvs, redisClient, kycClient)
 
 	for _, svc := range cfg.Services {
@@ -25,9 +41,8 @@ func SetupRouter(
 
 			mws := middlewareRegistry.GetMiddlewares(rt.Middlewares)
 
-
 			group := r.Group("")
-			group.Use(mws...)
+			group.Use(mws...) // custom middleware per route
 
 			switch rt.Method {
 			case "GET":

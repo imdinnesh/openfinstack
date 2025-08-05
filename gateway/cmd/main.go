@@ -5,6 +5,7 @@ import (
 
 	"github.com/imdinnesh/openfinstack/gateway/clients"
 	"github.com/imdinnesh/openfinstack/gateway/config"
+	"github.com/imdinnesh/openfinstack/gateway/observability"
 	"github.com/imdinnesh/openfinstack/gateway/router"
 	"github.com/imdinnesh/openfinstack/packages/redis"
 )
@@ -17,6 +18,9 @@ func main() {
 	cfgEnvs := config.LoadENVS()
 	kycClient:=clients.NewClient(cfgEnvs.KYCBaseURL)
 	redisClient := redis.NewClient(cfgEnvs.RedisUrl)
+
+	// Register observability metrics
+	observability.RegisterMetrics()
 	r := router.SetupRouter(cfg,cfgEnvs,redisClient,kycClient)
 	r.Run(":8000")
 }
