@@ -24,10 +24,10 @@ type WalletRepository interface {
 
 type walletRepo struct {
 	db        *gorm.DB
-	publisher events.WalletEventPublisher
+	publisher *events.WalletEventPublisher
 }
 
-func New(db *gorm.DB, publisher events.WalletEventPublisher) WalletRepository {
+func New(db *gorm.DB, publisher *events.WalletEventPublisher) WalletRepository {
 	return &walletRepo{db: db, publisher: publisher}
 }
 
