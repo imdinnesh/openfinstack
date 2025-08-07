@@ -18,7 +18,7 @@ func RegisterWalletRoutes(r *gin.RouterGroup, db *gorm.DB, cfg *config.Config) {
 	walletHandler := handler.New(walletSvc)
 
 	wallet := r.Group("/wallet")
-	wallet.POST("/wallet", walletHandler.CreateWallet)
+	wallet.POST("/create", walletHandler.CreateWallet)
 	wallet.GET("/:userID", walletHandler.GetWallet)
 	wallet.POST("/:userID/credit", walletHandler.AddFunds)
 	wallet.POST("/:userID/debit", walletHandler.WithdrawFunds)

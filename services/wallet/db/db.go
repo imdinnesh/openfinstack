@@ -17,12 +17,14 @@ func InitDB(cfg *config.Config) *gorm.DB {
 	}
 
 	// Auto migrate wallet table
+	db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`)
 	err = db.AutoMigrate(&models.Wallet{})
 	if err != nil {
 		log.Fatal("Failed to run migrations:", err)
 	}
 
 	// Auto migrate transaction table
+	db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`)
 	err = db.AutoMigrate(&models.Transaction{})
 	if err != nil {
 		log.Fatal("Failed to run migrations:", err)
