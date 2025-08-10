@@ -49,3 +49,37 @@ services:
         method: "POST"
         servicePath: "/kyc-admin/verify/:id"
         middlewares: ["auth","admin"]
+
+  - name: wallet
+    baseURL: "http://localhost:8083/api/v1"
+    routes:
+      - path: "/wallet/create"
+        method: "POST"
+        servicePath: "/wallet/create"
+        middlewares: ["auth","kyc"]
+
+      - path: "/wallet/:userID"
+        method: "GET"
+        servicePath: "/wallet/:userID"
+        middlewares: ["auth","kyc"]
+
+      - path: "/wallet/:userID/credit"
+        method: "POST"
+        servicePath: "/wallet/:userID/credit"
+        middlewares: ["auth","kyc"]
+
+      - path: "/wallet/:userID/debit"
+        method: "POST"
+        servicePath: "/wallet/:userID/debit"
+        middlewares: ["auth","kyc"]
+
+      - path: "/wallet/:userID/transactions"
+        method: "GET"
+        servicePath: "/wallet/:userID/transactions"
+        middlewares: ["auth","kyc"]
+      
+      - path: "/wallet/transfer"
+        method: "POST"
+        servicePath: "/wallet/transfer"
+        middlewares: ["auth","kyc"]
+  
