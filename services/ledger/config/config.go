@@ -27,7 +27,7 @@ func Load() *Config {
 	cfg := &Config{
 		Env:        getEnv("ENV", "dev"),
 		ServerPort: getEnv("SERVER_PORT", "8084"),
-		DBUrl:         getEnv("DB_URL", "postgres://ledger:ledger@localhost:5432/fintechdb_ledger"),
+		DBUrl:         getEnv("DB_URL", "postgres://ledger:ledger@localhost:5435/fintechdb_ledger"),
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)
