@@ -45,7 +45,9 @@ type LedgerTransaction struct {
 	PostedAt    *time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	Entries     []LedgerEntry `gorm:"constraint:OnDelete:RESTRICT;"`
+
+	// IMPORTANT: explicitly map the relation so GORM doesn't try to serialize the slice.
+	Entries []LedgerEntry `gorm:"foreignKey:TransactionID;references:ID;constraint:OnDelete:RESTRICT;"`
 }
 
 // LedgerEntry is immutable once the parent transaction is POSTED.
