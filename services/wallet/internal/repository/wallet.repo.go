@@ -88,6 +88,7 @@ func (r *walletRepo) AddFunds(ctx context.Context, userID uint, amount int64, de
 			// You might want to use a proper logger here
 			fmt.Printf("Failed to publish add funds event: %v\n", publishErr)
 		}
+		fmt.Printf("Published credit event for user %d amount %d\n", userID, amount)
 	}
 
 	return err
@@ -138,6 +139,7 @@ func (r *walletRepo) WithdrawFunds(ctx context.Context, userID uint, amount int6
 			// Log the error but don't fail the transaction
 			fmt.Printf("Failed to publish debit funds event: %v\n", publishErr)
 		}
+		fmt.Printf("Published debit event for user %d amount %d\n", userID, amount)
 	}
 
 	return err
@@ -228,6 +230,7 @@ func (r *walletRepo) Transfer(ctx context.Context, fromUserID, toUserID uint, am
 			// Log the error but don't fail the transaction
 			fmt.Printf("Failed to publish transfer event: %v\n", publishErr)
 		}
+		fmt.Printf("Published transfer event from user %d to user %d amount %d\n", fromUserID, toUserID, amount)
 	}
 
 	return err
