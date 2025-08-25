@@ -31,6 +31,3 @@ func WithTx(db *gorm.DB, fn func(tx *gorm.DB) error) error {
 		return fn(tx)
 	}, sqlTxOptions)
 }
-
-
-

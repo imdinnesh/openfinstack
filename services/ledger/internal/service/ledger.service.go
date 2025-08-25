@@ -69,6 +69,7 @@ func (s *ledgerService) CreateAndPost(req CreateTxnRequest) (*models.LedgerTrans
 		}
 		metaBytes, _ := json.Marshal(e.Meta)
 		entries = append(entries, models.LedgerEntry{
+			TransactionID: uuid.Nil, // This will be updated later
 			AccountID: e.AccountID,
 			EntryType: e.EntryType,
 			Amount:    e.Amount,
@@ -176,5 +177,3 @@ func (s *ledgerService) Reverse(original uuid.UUID, reason string) (*models.Ledg
 	}
 	return s.CreateAndPost(req)
 }
-
-
