@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/imdinnesh/openfinstack/services/wallet/internal/events"
-	"github.com/imdinnesh/openfinstack/services/wallet/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	clients "github.com/imdinnesh/openfinstack/services/wallet/client"
+	"github.com/imdinnesh/openfinstack/services/wallet/internal/events"
+	"github.com/imdinnesh/openfinstack/services/wallet/models"
 )
 
 type WalletRepository interface {
@@ -25,10 +27,11 @@ type WalletRepository interface {
 type walletRepo struct {
 	db        *gorm.DB
 	publisher *events.WalletEventPublisher
+	ledgerClient *clients.LedgerClient // New field
 }
 
-func New(db *gorm.DB, publisher *events.WalletEventPublisher) WalletRepository {
-	return &walletRepo{db: db, publisher: publisher}
+func New(db *gorm.DB, publisher *events.WalletEventPublisher, ledgerClient *clients.LedgerClient) WalletRepository {
+	return &walletRepo{db: db, publisher: publisher, ledgerClient: ledgerClient}
 }
 
 func (r *walletRepo) CreateWallet(userID uint) error {
@@ -49,9 +52,32 @@ func (r *walletRepo) GetWalletByUserID(userID uint) (*models.Wallet, error) {
 
 func (r *walletRepo) AddFunds(ctx context.Context, userID uint, amount int64, desc string) error {
 	var wallet models.Wallet
-	var transaction models.Transaction
 	
-	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	// Create a balanced transaction in the Ledger service first
+	ledgerReq := map[string]interface{}{
+		"externalRef": fmt.Sprintf("wallet_credit_%d_%d", userID, amount),
+		"type":        "WALLET_TOPUP",
+		"description": desc,
+		"currency":    "USD",
+		"entries": []map[string]interface{}{
+			{
+				"accountId": fmt.Sprintf("user_wallet_%d", userID),
+				"entryType": "CREDIT",
+				"amount":    amount,
+			},
+			{
+				"accountId": "internal_bank_account",
+				"entryType": "DEBIT",
+				"amount":    amount,
+			},
+		},
+	}
+	ledgerTxnID, err := r.ledgerClient.CreateTransaction(ctx, ledgerReq)
+	if err != nil {
+		return fmt.Errorf("failed to create ledger transaction: %w", err)
+	}
+
+	err = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Use proper SELECT FOR UPDATE locking
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("user_id = ?", userID).
@@ -65,9 +91,10 @@ func (r *walletRepo) AddFunds(ctx context.Context, userID uint, amount int64, de
 			return fmt.Errorf("failed to update wallet balance: %w", err)
 		}
 
-		// Create transaction record
-		transaction = models.Transaction{
+		// Create transaction record and link it to the Ledger transaction
+		transaction := models.Transaction{
 			WalletID:    wallet.ID,
+			LedgerTxnID: ledgerTxnID, // Store the new Ledger ID
 			Type:        models.CREDIT,
 			Amount:      amount,
 			Description: desc,
@@ -84,11 +111,8 @@ func (r *walletRepo) AddFunds(ctx context.Context, userID uint, amount int64, de
 	// Publish event only after successful transaction commit
 	if err == nil {
 		if publishErr := r.publisher.PublishAddFunds(ctx, userID, amount); publishErr != nil {
-			// Log the error but don't fail the transaction
-			// You might want to use a proper logger here
 			fmt.Printf("Failed to publish add funds event: %v\n", publishErr)
 		}
-		fmt.Printf("Published credit event for user %d amount %d\n", userID, amount)
 	}
 
 	return err
@@ -96,17 +120,48 @@ func (r *walletRepo) AddFunds(ctx context.Context, userID uint, amount int64, de
 
 func (r *walletRepo) WithdrawFunds(ctx context.Context, userID uint, amount int64, desc string) error {
 	var wallet models.Wallet
-	var transaction models.Transaction
 	
-	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Use proper SELECT FOR UPDATE locking
+	// Check balance before attempting to create the ledger transaction
+	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&wallet).Error; err != nil {
+		return fmt.Errorf("failed to find wallet: %w", err)
+	}
+	if wallet.Balance < amount {
+		return errors.New("insufficient balance")
+	}
+
+	// Create a balanced transaction in the Ledger service first
+	ledgerReq := map[string]interface{}{
+		"externalRef": fmt.Sprintf("wallet_debit_%d_%d", userID, amount),
+		"type":        "WITHDRAWAL",
+		"description": desc,
+		"currency":    "USD",
+		"entries": []map[string]interface{}{
+			{
+				"accountId": fmt.Sprintf("user_wallet_%d", userID),
+				"entryType": "DEBIT",
+				"amount":    amount,
+			},
+			{
+				"accountId": "external_bank_account",
+				"entryType": "CREDIT",
+				"amount":    amount,
+			},
+		},
+	}
+	ledgerTxnID, err := r.ledgerClient.CreateTransaction(ctx, ledgerReq)
+	if err != nil {
+		return fmt.Errorf("failed to create ledger transaction: %w", err)
+	}
+	
+	err = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Re-fetch with lock for balance update
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("user_id = ?", userID).
 			First(&wallet).Error; err != nil {
 			return fmt.Errorf("failed to find wallet: %w", err)
 		}
 
-		// Check sufficient balance
+		// Check sufficient balance again to be safe
 		if wallet.Balance < amount {
 			return fmt.Errorf("insufficient balance: required %d, available %d", amount, wallet.Balance)
 		}
@@ -117,9 +172,10 @@ func (r *walletRepo) WithdrawFunds(ctx context.Context, userID uint, amount int6
 			return fmt.Errorf("failed to update wallet balance: %w", err)
 		}
 
-		// Create transaction record
-		transaction = models.Transaction{
+		// Create transaction record and link it to the Ledger transaction
+		transaction := models.Transaction{
 			WalletID:    wallet.ID,
+			LedgerTxnID: ledgerTxnID, // Store the new Ledger ID
 			Type:        models.DEBIT,
 			Amount:      amount,
 			Description: desc,
@@ -136,10 +192,8 @@ func (r *walletRepo) WithdrawFunds(ctx context.Context, userID uint, amount int6
 	// Publish event only after successful transaction commit
 	if err == nil {
 		if publishErr := r.publisher.PublishDebitFunds(ctx, userID, amount); publishErr != nil {
-			// Log the error but don't fail the transaction
 			fmt.Printf("Failed to publish debit funds event: %v\n", publishErr)
 		}
-		fmt.Printf("Published debit event for user %d amount %d\n", userID, amount)
 	}
 
 	return err
@@ -147,35 +201,60 @@ func (r *walletRepo) WithdrawFunds(ctx context.Context, userID uint, amount int6
 
 func (r *walletRepo) Transfer(ctx context.Context, fromUserID, toUserID uint, amount int64) error {
 	var fromWallet, toWallet models.Wallet
-	var transactions []models.Transaction
 	
-	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Lock both wallets in consistent order to prevent deadlocks
-		// Always lock the wallet with smaller ID first
-		firstID, secondID := fromUserID, toUserID
-		if fromUserID > toUserID {
-			firstID, secondID = toUserID, fromUserID
-		}
+	if fromUserID == toUserID {
+		return errors.New("cannot transfer to self")
+	}
+	if amount <= 0 {
+		return errors.New("amount must be positive")
+	}
 
+	// Lock both wallets in consistent order
+	firstID, secondID := fromUserID, toUserID
+	if fromUserID > toUserID {
+		firstID, secondID = toUserID, fromUserID
+	}
+	
+	// Create the Ledger transaction first, before locking wallets
+	ledgerReq := map[string]interface{}{
+		"externalRef": fmt.Sprintf("wallet_transfer_%d_%d_%d", fromUserID, toUserID, amount),
+		"type":        "WALLET_TRANSFER",
+		"description": "Funds transfer",
+		"currency":    "USD",
+		"entries": []map[string]interface{}{
+			{
+				"accountId": fmt.Sprintf("user_wallet_%d", fromUserID),
+				"entryType": "DEBIT",
+				"amount":    amount,
+			},
+			{
+				"accountId": fmt.Sprintf("user_wallet_%d", toUserID),
+				"entryType": "CREDIT",
+				"amount":    amount,
+			},
+		},
+	}
+	ledgerTxnID, err := r.ledgerClient.CreateTransaction(ctx, ledgerReq)
+	if err != nil {
+		return fmt.Errorf("failed to create ledger transaction: %w", err)
+	}
+
+	err = r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Lock first wallet
-		var firstWallet models.Wallet
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("user_id = ?", firstID).First(&firstWallet).Error; err != nil {
+			Where("user_id = ?", firstID).First(&fromWallet).Error; err != nil {
 			return fmt.Errorf("failed to find wallet for user %d: %w", firstID, err)
 		}
 
 		// Lock second wallet
-		var secondWallet models.Wallet
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("user_id = ?", secondID).First(&secondWallet).Error; err != nil {
+			Where("user_id = ?", secondID).First(&toWallet).Error; err != nil {
 			return fmt.Errorf("failed to find wallet for user %d: %w", secondID, err)
 		}
 
 		// Assign wallets based on original order
-		if fromUserID == firstID {
-			fromWallet, toWallet = firstWallet, secondWallet
-		} else {
-			fromWallet, toWallet = secondWallet, firstWallet
+		if fromUserID != firstID {
+			fromWallet, toWallet = toWallet, fromWallet
 		}
 
 		// Check sufficient balance
@@ -198,9 +277,10 @@ func (r *walletRepo) Transfer(ctx context.Context, fromUserID, toUserID uint, am
 		refID := uuid.New()
 
 		// Create transaction records
-		transactions = []models.Transaction{
+		transactions := []models.Transaction{
 			{
 				WalletID:    fromWallet.ID,
+				LedgerTxnID: ledgerTxnID, // Link to the Ledger transaction
 				Type:        models.TRANSFER_OUT,
 				Amount:      amount,
 				Description: fmt.Sprintf("Transfer to user %d", toUserID),
@@ -209,6 +289,7 @@ func (r *walletRepo) Transfer(ctx context.Context, fromUserID, toUserID uint, am
 			},
 			{
 				WalletID:    toWallet.ID,
+				LedgerTxnID: ledgerTxnID, // Link to the Ledger transaction
 				Type:        models.TRANSFER_IN,
 				Amount:      amount,
 				Description: fmt.Sprintf("Transfer from user %d", fromUserID),
@@ -227,10 +308,8 @@ func (r *walletRepo) Transfer(ctx context.Context, fromUserID, toUserID uint, am
 	// Publish event only after successful transaction commit
 	if err == nil {
 		if publishErr := r.publisher.PublishTransaction(ctx, fromUserID, toUserID, amount); publishErr != nil {
-			// Log the error but don't fail the transaction
 			fmt.Printf("Failed to publish transfer event: %v\n", publishErr)
 		}
-		fmt.Printf("Published transfer event from user %d to user %d amount %d\n", fromUserID, toUserID, amount)
 	}
 
 	return err

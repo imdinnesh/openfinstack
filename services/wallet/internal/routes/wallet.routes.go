@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	clients "github.com/imdinnesh/openfinstack/services/wallet/client"
 	"github.com/imdinnesh/openfinstack/services/wallet/config"
 	"github.com/imdinnesh/openfinstack/services/wallet/internal/events"
 	"github.com/imdinnesh/openfinstack/services/wallet/internal/handler"
@@ -13,7 +14,8 @@ import (
 
 func RegisterWalletRoutes(r *gin.RouterGroup, db *gorm.DB, cfg *config.Config) {
 	publisher := events.NewWalletEventPublisher()
-	walletRepo := repository.New(db, publisher)
+	ledgerClient := clients.NewLedgerClient(cfg.LedgerServiceURL)
+	walletRepo := repository.New(db, publisher, ledgerClient)
 	walletSvc := service.New(walletRepo)
 	walletHandler := handler.New(walletSvc)
 
@@ -24,5 +26,4 @@ func RegisterWalletRoutes(r *gin.RouterGroup, db *gorm.DB, cfg *config.Config) {
 	wallet.POST("/:userID/debit", walletHandler.WithdrawFunds)
 	wallet.POST("/transfer", walletHandler.Transfer)
 	wallet.GET("/:userID/transactions", walletHandler.GetTransactions)
-
 }

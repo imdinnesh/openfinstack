@@ -13,6 +13,7 @@ type Config struct {
 	RedisUrl   string
 	JWTSecret  string
 	ServerPort string
+	LedgerServiceURL string // New field
 }
 
 func Load() *Config {
@@ -32,6 +33,7 @@ func Load() *Config {
 		DBUrl:         getEnv("DB_URL", "postgres://wallet:wallet@localhost:5434/fintechdb_wallet"),
 		RedisUrl:      getEnv("REDIS_URL", "localhost:6379"),
 		JWTSecret:     getEnv("JWT_SECRET", "supersecretkey"),
+		LedgerServiceURL: getEnv("LEDGER_SERVICE_URL", "http://localhost:8084/api/v1"), // Default URL
 	}
 
 	fmt.Println("Loaded environment:", cfg.Env)

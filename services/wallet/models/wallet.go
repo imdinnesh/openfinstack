@@ -24,11 +24,12 @@ const (
 )
 
 type Transaction struct {
-	ID          uuid.UUID       `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	WalletID    uuid.UUID       `gorm:"type:uuid;index"`
-	Type        TransactionType `gorm:"type:varchar(20)"`
-	Amount      int64
-	Description string
-	ReferenceID *uuid.UUID `gorm:"type:uuid"` // e.g., transfer id
-	CreatedAt   time.Time
+	ID            uuid.UUID       `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	WalletID      uuid.UUID       `gorm:"type:uuid;index"`
+	LedgerTxnID   uuid.UUID       `gorm:"type:uuid;index;unique"` // New field
+	Type          TransactionType `gorm:"type:varchar(20)"`
+	Amount        int64
+	Description   string
+	ReferenceID   *uuid.UUID `gorm:"type:uuid"` // e.g., transfer id
+	CreatedAt     time.Time
 }

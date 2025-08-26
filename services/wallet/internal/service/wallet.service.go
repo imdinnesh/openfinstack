@@ -93,4 +93,3 @@ func (s *walletService) GetTransactions(userID uint, limit, offset int) ([]model
 	}
 	return s.repo.GetTransactions(userID, limit, offset)
 }
-
