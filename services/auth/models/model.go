@@ -16,3 +16,11 @@ type User struct {
 	UpdatedAt    time.Time
 	DeletedAt    *time.Time `gorm:"index"`
 }
+
+type RefreshToken struct{
+	ID        uint      `gorm:"primaryKey"`
+	UserID    uint      `gorm:"not null"`
+	Token     string    `gorm:"not null"`
+	CreatedAt time.Time `gorm:"not null"`
+	ExpiresAt time.Time `gorm:"not null"`
+}
