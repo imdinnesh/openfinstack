@@ -22,18 +22,20 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo repository.UserRepository
-	cfg      *config.Config
-	redis    *redis.Client
-	publisher *events.UserEventPublisher
+	userRepo      repository.UserRepository
+	refreshTokenRepo repository.RefreshTokenRepository
+	cfg           *config.Config
+	redis         *redis.Client
+	publisher     *events.UserEventPublisher
 }
 
-func NewAuthService(repo repository.UserRepository, cfg *config.Config, rds *redis.Client, publisher *events.UserEventPublisher) AuthService {
+func NewAuthService(repo repository.UserRepository, refreshTokenRepo repository.RefreshTokenRepository, cfg *config.Config, rds *redis.Client, publisher *events.UserEventPublisher) AuthService {
 	return &authService{
-		userRepo: repo,
-		cfg:      cfg,
-		redis:    rds,
-		publisher: publisher,
+		userRepo:      repo,
+		refreshTokenRepo: refreshTokenRepo,
+		cfg:           cfg,
+		redis:        rds,
+		publisher:    publisher,
 	}
 }
 
@@ -84,6 +86,16 @@ func (s *authService) LoginUser(email, password string) (string, string, error) 
 
 	refreshToken, err := s.generateJWT(user.ID, 7*24*time.Hour, user.Role)
 	if err != nil {
+		return "", "", err
+	}
+
+	// Save the refresh token in the database
+	if err := s.refreshTokenRepo.Create(&models.RefreshToken{
+		UserID: user.ID,
+		Token:  refreshToken,
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		CreatedAt: time.Now(),
+	}); err != nil {
 		return "", "", err
 	}
 

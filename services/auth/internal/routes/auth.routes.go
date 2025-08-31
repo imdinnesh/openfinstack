@@ -14,8 +14,9 @@ import (
 
 func RegisterAuthRoutes(r *gin.RouterGroup, db *gorm.DB, cfg *config.Config, redisClient *redis.Client) {
 	userRepo := repository.NewUserRepository(db)
+	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
 	publisher := events.NewUserEventPublisher()
-	authSvc := service.NewAuthService(userRepo, cfg, redisClient, publisher)
+	authSvc := service.NewAuthService(userRepo, refreshTokenRepo, cfg, redisClient, publisher)
 	authHandler := handler.NewAuthHandler(authSvc)
 
 	middleware.New(cfg.JWTSecret, redisClient)
