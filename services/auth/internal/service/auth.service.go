@@ -109,7 +109,18 @@ func (s *authService) RefreshToken(oldRefreshToken string) (string, string, erro
 		return "", "", errors.New("invalid refresh token")
 	}
 
+
 	userID := uint(claims["user_id"].(float64))
+
+	isExpired,err:=s.refreshTokenRepo.IsExpired(userID);
+
+	if err!=nil{
+		return "","",errors.New("expired refresh token");
+	}
+
+	if isExpired{
+		return "","",errors.New("expired refresh token");
+	}
 
 	accessToken, err := s.generateJWT(userID, 15*time.Minute,"user")
 	if err != nil {
