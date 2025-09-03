@@ -95,7 +95,19 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	err := h.authService.RevokeToken(req.Token)
+	userID, exists := c.Request.Header[http.CanonicalHeaderKey("X-User-Id")]
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+		return
+	}
+
+	userIDInt, err := strconv.ParseUint(userID[0], 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	err = h.authService.RevokeToken(req.Token, uint(userIDInt))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not revoke token", "details": err.Error()})
 		return

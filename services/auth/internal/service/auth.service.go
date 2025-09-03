@@ -17,7 +17,7 @@ type AuthService interface {
 	RegisterUser(email, password string) (*models.User, error)
 	LoginUser(email, password string) (string, string, error)
 	RefreshToken(oldRefreshToken string) (string, string, error)
-	RevokeToken(token string) error
+	RevokeToken(token string, userID uint) error
 	Profile(userID uint) (*models.User, error)
 }
 
@@ -136,7 +136,12 @@ func (s *authService) RefreshToken(oldRefreshToken string) (string, string, erro
 }
 
 // RevokeToken adds token to Redis blacklist
-func (s *authService) RevokeToken(token string) error {
+func (s *authService) RevokeToken(token string,userID uint) error {
+
+	// Remove the refresh token from the database
+	if err := s.refreshTokenRepo.DeleteByUserID(userID); err != nil {
+		return err
+	}
 	return s.redis.BlacklistToken(token, 15*time.Minute)
 }
 
