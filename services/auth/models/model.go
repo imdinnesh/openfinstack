@@ -17,10 +17,11 @@ type User struct {
 	DeletedAt    *time.Time `gorm:"index"`
 }
 
-type RefreshToken struct{
+type RefreshToken struct {
 	ID        uint      `gorm:"primaryKey"`
-	UserID    uint      `gorm:"not null"`
+	UserID    uint      `gorm:"uniqueIndex;not null"` // ensures only one per user
 	Token     string    `gorm:"not null"`
 	CreatedAt time.Time `gorm:"not null"`
 	ExpiresAt time.Time `gorm:"not null"`
 }
+

@@ -22,20 +22,20 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo      repository.UserRepository
+	userRepo         repository.UserRepository
 	refreshTokenRepo repository.RefreshTokenRepository
-	cfg           *config.Config
-	redis         *redis.Client
-	publisher     *events.UserEventPublisher
+	cfg              *config.Config
+	redis            *redis.Client
+	publisher        *events.UserEventPublisher
 }
 
 func NewAuthService(repo repository.UserRepository, refreshTokenRepo repository.RefreshTokenRepository, cfg *config.Config, rds *redis.Client, publisher *events.UserEventPublisher) AuthService {
 	return &authService{
-		userRepo:      repo,
+		userRepo:         repo,
 		refreshTokenRepo: refreshTokenRepo,
-		cfg:           cfg,
-		redis:        rds,
-		publisher:    publisher,
+		cfg:              cfg,
+		redis:            rds,
+		publisher:        publisher,
 	}
 }
 
@@ -79,7 +79,7 @@ func (s *authService) LoginUser(email, password string) (string, string, error) 
 		return "", "", errors.New("invalid credentials")
 	}
 
-	accessToken, err := s.generateJWT(user.ID, 15*time.Minute,user.Role)
+	accessToken, err := s.generateJWT(user.ID, 15*time.Minute, user.Role)
 	if err != nil {
 		return "", "", err
 	}
@@ -90,9 +90,9 @@ func (s *authService) LoginUser(email, password string) (string, string, error) 
 	}
 
 	// Save the refresh token in the database
-	if err := s.refreshTokenRepo.Create(&models.RefreshToken{
-		UserID: user.ID,
-		Token:  refreshToken,
+	if err := s.refreshTokenRepo.Upsert(&models.RefreshToken{
+		UserID:    user.ID,
+		Token:     refreshToken,
 		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 		CreatedAt: time.Now(),
 	}); err != nil {
@@ -104,39 +104,50 @@ func (s *authService) LoginUser(email, password string) (string, string, error) 
 
 // RefreshToken issues new tokens if valid
 func (s *authService) RefreshToken(oldRefreshToken string) (string, string, error) {
-	claims, err := s.parseJWT(oldRefreshToken)
-	if err != nil {
-		return "", "", errors.New("invalid refresh token")
-	}
+    claims, err := s.parseJWT(oldRefreshToken)
+    if err != nil {
+        return "", "", errors.New("invalid refresh token")
+    }
 
+    userID := uint(claims["user_id"].(float64))
 
-	userID := uint(claims["user_id"].(float64))
+    // Fetch the stored refresh token for this user
+    rt, err := s.refreshTokenRepo.FindByUserID(userID)
+    if err != nil {
+        return "", "", errors.New("refresh token not found")
+    }
 
-	isExpired,err:=s.refreshTokenRepo.IsExpired(userID);
+    // Check match and expiry
+    if rt.Token != oldRefreshToken || rt.ExpiresAt.Before(time.Now()) {
+        return "", "", errors.New("invalid or expired refresh token")
+    }
 
-	if err!=nil{
-		return "","",errors.New("expired refresh token");
-	}
+    // Generate new tokens
+    accessToken, err := s.generateJWT(userID, 15*time.Minute, "user")
+    if err != nil {
+        return "", "", err
+    }
 
-	if isExpired{
-		return "","",errors.New("expired refresh token");
-	}
+    newRefreshToken, err := s.generateJWT(userID, 7*24*time.Hour, "user")
+    if err != nil {
+        return "", "", err
+    }
 
-	accessToken, err := s.generateJWT(userID, 15*time.Minute,"user")
-	if err != nil {
-		return "", "", err
-	}
+    // Replace stored refresh token
+    if err := s.refreshTokenRepo.Upsert(&models.RefreshToken{
+        UserID:    userID,
+        Token:     newRefreshToken,
+        ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+        CreatedAt: time.Now(),
+    }); err != nil {
+        return "", "", err
+    }
 
-	refreshToken, err := s.generateJWT(userID, 7*24*time.Hour,"user")
-	if err != nil {
-		return "", "", err
-	}
-
-	return accessToken, refreshToken, nil
+    return accessToken, newRefreshToken, nil
 }
 
 // RevokeToken adds token to Redis blacklist
-func (s *authService) RevokeToken(token string,userID uint) error {
+func (s *authService) RevokeToken(token string, userID uint) error {
 
 	// Remove the refresh token from the database
 	if err := s.refreshTokenRepo.DeleteByUserID(userID); err != nil {
