@@ -7,6 +7,7 @@ use (
 	./services/wallet
 	./services/notification
 	./services/verification
+	./services/frm
 	./pkg/logger
 	./pkg/config
 	./pkg/middleware
